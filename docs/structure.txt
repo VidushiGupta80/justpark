@@ -1,0 +1,37 @@
+helloworld/                    - Main folder
+│
+│
+├ etc                          - Config                        -> script -> default parameters -> 4 set -> config -> 
+├── docs/                      - Documention
+│   ├── hello.md
+│   └── world.md
+│
+├── helloworld/                - SRC folder [Python] -> code
+│   ├── __init__.py
+│   ├── runner.py
+│   ├── hello/
+│   │   ├── __init__.py
+│   │   ├── hello.py
+│   │   └── helpers.py
+│   │
+│   └── world/
+│       ├── __init__.py
+│       ├── helpers.py
+│       └── world.py
+│
+├── data/                       - Data
+│   ├── input.csv
+│   └── output.xlsx
+│
+├── tests/                      - Testcases -> tests 
+│   ├── hello
+│   │   ├── helpers_tests.py
+│   │   └── hello_tests.py
+│   │
+│   └── world/
+│       ├── helpers_tests.py
+│       └── world_tests.py
+│
+├── .gitignore                  - GitHub -> GIT -> VCS [Version control system] -> .gitignore -> avoid   c++ compile -> object -> *.o
+├── LICENSE                     - LICENSE -> terms & conds.
+└── README.md                   - Information about your product/your repo
