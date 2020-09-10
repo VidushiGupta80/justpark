@@ -2,7 +2,6 @@
 Parking Lot management product written in Python. Uses Flask for REST APIs. MySql for Database.
 
 ## Requirements:
-----------------
 1. The parking lot should have multiple floors where customers can park their cars.
 2. The parking lot should have multiple entry and exit points.
 Customers can collect a parking ticket from the entry points and can pay the parking fee at the exit
@@ -28,7 +27,6 @@ The system should support a per-hour parking fee model. For example, customers h
 the first hour, $3.5 for the second and third hours, and $2.5 for all the remaining hours.
 
 ## Actors:
-----------
 1. Admin: Mainly responsible for adding and modifying parking floors, parking spots, entrance, and exit
 panels, adding/removing parking attendants, etc.
 2. Customer: All customers can get a parking ticket and pay for it.
@@ -38,7 +36,6 @@ cash for ticket payment.
 from a parking spot.
 
 ## Use Cases:
--------------
 1. Add/Remove/Edit parking floor: To add, remove or modify a parking floor from the system. Each floor can have its own
 display board to show free parking spots.
 2. Add/Remove/Edit parking spot: To add, remove or modify a parking spot on a parking floor.
