@@ -19,6 +19,7 @@ class ExitPoint(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     floorNumber = db.Column(db.Integer, nullable = False)
     vehicleCount = db.Column(db.Integer, nullable = False)
+    # TODO: Add displayBoard table
     displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
@@ -51,7 +52,7 @@ class Customer(Person):
     __mapper_args__ = {'polymorphic_identity': 'customer'}
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
     vehicleType = db.Column(db.String, nullable = False)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.number"), nullable = False)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
 
 class Admin(Person):
     __mapper_args__ = {'polymorphic_identity' : 'admin'}
@@ -70,7 +71,7 @@ class ParkingAttendant(Person):
     joiningDate = db.Column(db.DateTime, nullable = False)
     leavingDate = db.Column(db.DateTime, nullable = True)
     floor = db.Column(db.Integer, nullable = False)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.number"), nullable = False)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
 
     @declared_attr
     def emailID(self, cls):
@@ -83,7 +84,7 @@ class ParkingAttendant(Person):
 class Vehicle(db.Model):
     __tablename__ = "vehicle"
     vehicleNumber = db.Column(db.String, primary_key = True)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.number"), nullable = False)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
     customerID = db.Column(db.Integer, db.ForeignKey("person.id"), nullable = False)
     wheels = db.Column(db.Integer, nullable = False)
     vehicleType = db.Column(db.String, nullable = False)
