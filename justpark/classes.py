@@ -1,9 +1,10 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declared_attr
+from server import app
 
 
-db = SQLAlchemy()
+db = SQLAlchemy(app)
 
 class ParkingLot(db.Model):
     __tablename__ = "parkingLot"
@@ -16,7 +17,7 @@ class ParkingLot(db.Model):
 class ExitPoint(db.Model):
     __tablename__ = "exitPoint"
     id = db.Column(db.Integer, primary_key = True)
-    floorNumber = db.column(db.Integer, nullable = False)
+    floorNumber = db.Column(db.Integer, nullable = False)
     vehicleCount = db.Column(db.Integer, nullable = False)
     displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
@@ -25,7 +26,7 @@ class ExitPoint(db.Model):
 class EntryPoint(db.Model):
     __tablename__ = "entryPoint"
     id = db.Column(db.Integer, primary_key = True)
-    floorNumber = db.column(db.Integer, nullable = False)
+    floorNumber = db.Column(db.Integer, nullable = False)
     vehicleCount = db.Column(db.Integer, nullable = False)
     displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
@@ -37,7 +38,7 @@ class Person(db.Model):
     FirstName = db.Column(db.String, nullable = False)
     MiddleName = db.Column(db.String, nullable = True)
     LastName = db.Column(db.String, nullable = False)
-    houseNumber = db>column(db.Stirng, nullable = False)
+    houseNumber = db.Column(db.String, nullable = False)
     city = db.Column(db.String, nullable = False)
     state  = db.Column(db.String, nullable = False)
     country = db.Column(db.String, nullable = False)
@@ -57,12 +58,12 @@ class Admin(Person):
     password = db.Column(db.String, nullable = False)
 
     @declared_attr
-    def emailID(cls):
-        return Person.__table__.c.get('emailID', Column(String))
+    def emailID(self, cls):
+        return Person.__table__.c.get('emailID', db.Column(db.String))
 
     @declared_attr
-    def salary(cls):
-        return Person.__table__.c.get('salary', Column(Integer))
+    def salary(self, cls):
+        return Person.__table__.c.get('salary', db.Column(db.Integer))
 
 class ParkingAttendant(Person):
     __mapper_args__ = {'polymorphic_identity' : 'parkingAttendant'}
@@ -72,12 +73,12 @@ class ParkingAttendant(Person):
     ticketNumber = db.Column(db.String, db.ForeignKey("ticket.number"), nullable = False)
 
     @declared_attr
-    def emailID(cls):
-        return Person.__table__.c.get('emailID', Column(String))
+    def emailID(self, cls):
+        return Person.__table__.c.get('emailID', db.Column(db.String))
 
     @declared_attr
-    def salary(cls):
-        return Person.__table__.c.get('salary', Column(Integer))
+    def salary(self, cls):
+        return Person.__table__.c.get('salary', db.Column(db.Integer))
 
 class Vehicle(db.Model):
     __tablename__ = "vehicle"
@@ -96,28 +97,3 @@ class Ticket(db.Model):
     inTime = db.Column(db.DateTime, nullable = False)
     outTime = db.Column(db.DateTime, nullable = True)
     chargingFee = db.Column(db.Integer, nullable = True)
-
-class ChargingPanel(db.Model):
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
