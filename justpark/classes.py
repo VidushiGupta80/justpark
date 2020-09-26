@@ -16,7 +16,7 @@ class ParkingLot(db.Model):
 class ExitPoint(db.Model):
     __tablename__ = "exitPoint"
     id = db.Column(db.Integer, primary_key = True)
-    floorNumber = db.column(db.Integer, nullable = False)
+    floorNumber = db.Column(db.Integer, nullable = False)
     vehicleCount = db.Column(db.Integer, nullable = False)
     displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
@@ -25,7 +25,7 @@ class ExitPoint(db.Model):
 class EntryPoint(db.Model):
     __tablename__ = "entryPoint"
     id = db.Column(db.Integer, primary_key = True)
-    floorNumber = db.column(db.Integer, nullable = False)
+    floorNumber = db.Column(db.Integer, nullable = False)
     vehicleCount = db.Column(db.Integer, nullable = False)
     displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
@@ -37,7 +37,7 @@ class Person(db.Model):
     FirstName = db.Column(db.String, nullable = False)
     MiddleName = db.Column(db.String, nullable = True)
     LastName = db.Column(db.String, nullable = False)
-    houseNumber = db>column(db.Stirng, nullable = False)
+    houseNumber = db.Column(db.String, nullable = False)
     city = db.Column(db.String, nullable = False)
     state  = db.Column(db.String, nullable = False)
     country = db.Column(db.String, nullable = False)
@@ -98,7 +98,7 @@ class Ticket(db.Model):
     chargingFee = db.Column(db.Integer, nullable = True)
 
 class ChargingPanel(db.Model):
-    
+
 
 
 
