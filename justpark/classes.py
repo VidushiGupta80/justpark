@@ -18,8 +18,7 @@ class ExitPoint(db.Model):
     __tablename__ = "exitPoint"
     id = db.Column(db.Integer, primary_key = True)
     floorNumber = db.Column(db.Integer, nullable = False)
-    vehicleCount = db.Column(db.Integer, nullable = False)
-    # TODO: Add displayBoard table
+    vehicleCount = db.Column(db.Integer, nullable = False)    
     displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
@@ -98,3 +97,53 @@ class Ticket(db.Model):
     inTime = db.Column(db.DateTime, nullable = False)
     outTime = db.Column(db.DateTime, nullable = True)
     chargingFee = db.Column(db.Integer, nullable = True)
+
+class ChargingPanel(db.Model):
+    __tablename__ = "chargingPanel"
+    spotID = db.Column(db.String, primary_key = True)
+    rate = db.Column(db.Integer, nullable = False)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
+    vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
+    lastConnectionID = db.Column(db.Integer, db.ForeignKey("lastConnection.id"), nullable = True)
+
+class LastConnection(db.Model):
+    __tablename__ = "lastConnection"
+    id = db.Column(db.Integer, primary_key = True)
+    connect = db.Column(db.DateTime, nullable = True)
+    disconnect = db.Column(db.DateTime, nullable = True)
+    spotID = db.Column(db.String, db.ForeignKey("chargingPanel.spotID"), nullable = True)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
+
+class DisplayBoard(db.Model):
+    __tablename__ = "displayBoard"
+    id = db.Column(db.Integer, primary_key = True)
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
+    floorNumber = db.Column(db.Integer, nullable = False)
+    message = db.Column(db.String, nullable = True)
+    userID = db.Column(db.Integer, db.ForeignKey("person.id"), nullable = True)
+    timeStamp = db.Column(db.DateTime, nullable = True)
+    entryPointID = db.Column(db.Integer, db.ForeignKey("entryPoint.id"), nullable = True)
+    exitPointID = db.Column(db.Integer, db.ForeignKey("exitPoint.id"), nullable = True)
+
+class ParkingSpot(db.Model):
+    __tablename__ = "parkingSpot"
+    spotID = db.Column(db.String, primary_key = True)
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
+    floorNumber = db.Column(db.Integer, nullable = False)
+    spotType = db.Column(db.String, nullable = False)
+    status = db.Column(db.Bool, nullable = False)
+    rowNumber = db.Column(db.Integer, nullable = False)
+    columnNumber = db.Column(db.Integer, nullable = False)
+
+class Capacity(db.Model):
+    __tablename__ = "capacity"
+    floorNumber = db.Column(db.Integer, primary_key = True)
+    totalFloors = db.Column(db.Integer, nullable = False)
+    parkingLotID = db.Column(db.Integer, primary_key = True, db.ForeignKey("parkingLot.id"), nullable = False)    
+    carSpots = db.Column(db.Integer, nullable = False)
+    bikeSpots = db.Column(db.Integer, nullable = False)
+    heavyWeightSpots = db.Column(db.Integer, nullable = False)
+    electricCarSpots = db.Column(db.Integer, nullable = False)
+
+
+

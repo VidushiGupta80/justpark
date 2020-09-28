@@ -71,7 +71,7 @@ Response Body:
                 }
 </pre>
 
-### GET /displayMessage/{floorNo}
+### POST /displayMessage/{floorNo}
 <pre>
 Request Body:
                 {
