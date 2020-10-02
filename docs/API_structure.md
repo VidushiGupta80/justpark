@@ -3,9 +3,21 @@
 
 * Details important to take the action will be in the body of the APIs
 * Make changes to APIs on the fly if needed according to designed LLD and ER diagrams
+
+### GET /entryOptions/{floorNo}/{entryNo}
+<pre>
+Request Body:
+                {}
+Response Body:
+                {
+                    'Enter customer and car details': '/enter/{floorNo}/{entryNo}'
+                    'Get available slots': '/freeSlots/{floorNo}'
+                }
+</pre>
+
 ### POST /enter/{floorNo}/{entryNo}
 <pre>
-Request Body: 
+Request Body:
                 {
                     customerName:
                     customerVehicleType:
