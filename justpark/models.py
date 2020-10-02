@@ -1,10 +1,5 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declared_attr
-from server import app
-
-
-db = SQLAlchemy(app)
+from justpark import db
 
 class ParkingLot(db.Model):
     __tablename__ = "parkingLot"
@@ -32,68 +27,99 @@ class EntryPoint(db.Model):
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
 
-class Person(db.Model):
-    __tablename__ = "person"
-    id = db.Column(db.Integer, primary_key = True)
-    FirstName = db.Column(db.String, nullable = False)
-    MiddleName = db.Column(db.String, nullable = True)
-    LastName = db.Column(db.String, nullable = False)
-    houseNumber = db.Column(db.String, nullable = False)
+class Customer(db.Model):
+    __tablename__ = "customer"
+    customerID = db.Column(db.String, primary_key = True)
+
+    vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
+    vehicleType = db.Column(db.String, nullable = False)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
+   
+    firstName = db.Column(db.String, nullable = False)
+    middleName = db.Column(db.String, nullable = True)
+    lastName = db.Column(db.String, nullable = False)
+    address = db.Column(db.String, nullable = False)
     city = db.Column(db.String, nullable = False)
     state  = db.Column(db.String, nullable = False)
     country = db.Column(db.String, nullable = False)
     pincode = db.Column(db.Integer, nullable = False)
-    personType = db.Column(db.String, nullable = False)
     contactNumber = db.Column(db.Integer, nullable = False)
-    __mapper_args__ = {'polymorphic_on': personType}
 
-class Customer(Person):
-    __mapper_args__ = {'polymorphic_identity': 'customer'}
-    vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
-    vehicleType = db.Column(db.String, nullable = False)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
+    def __repr__(self):
+        idLine = "Customer ID: %s" % (self.customerID)
+        nameLine = "First Name: %s, Middle Name: %s, Last Name: %s" % (self.firstName, self.middleName, self.lastName)
+        address = "Address: %s, City: %s, State: %s, Country: %s, Pincode: %s" % (self.address, self.city, self.state, self.country, self.pincode)
+        contactNumber = "Contact Number: %s" % (self.contactNumber)
+        vehicleInfo = "Vehicle Number: %s, Vehicle Type: %s, ticketNumber: %s" % (self.vehicleNumber, self.vehicleType, self.ticketNumber)
+        return '\n'.join([idLine, nameLine, address, contactNumber, vehicleInfo])
 
-class Admin(Person):
-    __mapper_args__ = {'polymorphic_identity' : 'admin'}
+class Admin(db.Model):
+    __tablename__ = "admin"
+    adminID = db.Column(db.Integer, autoincrement = True, primary_key = True)
     password = db.Column(db.String, nullable = False)
+    emailID = db.Column(db.String, nullable = False)
+    salary = db.Column(db.Integer, nullable = False)
+   
+    firstName = db.Column(db.String, nullable = False)
+    middleName = db.Column(db.String, nullable = True)
+    lastName = db.Column(db.String, nullable = False)
+    address = db.Column(db.String, nullable = False)
+    city = db.Column(db.String, nullable = False)
+    state  = db.Column(db.String, nullable = False)
+    country = db.Column(db.String, nullable = False)
+    pincode = db.Column(db.Integer, nullable = False)
+    contactNumber = db.Column(db.Integer, nullable = False)
 
-    @declared_attr
-    def emailID(self, cls):
-        return Person.__table__.c.get('emailID', db.Column(db.String))
+    def __repr__(self):
+        idLine = "Admin ID: %s" % (self.adminID)
+        nameLine = "First Name: %s, Middle Name: %s, Last Name: %s" % (self.firstName, self.middleName, self.lastName)
+        address = "Address: %s, City: %s, State: %s, Country: %s, Pincode: %s" % (self.address, self.city, self.state, self.country, self.pincode)
+        contactNumber = "Contact Number: %s" % (self.contactNumber)
+        adminInfo = "Password: password thodi dikha denge :), emailId: %s, salary: %s" % (self.emailID, self.salary)
+        return '\n'.join([idLine, nameLine, address, contactNumber, adminInfo])
 
-    @declared_attr
-    def salary(self, cls):
-        return Person.__table__.c.get('salary', db.Column(db.Integer))
+class ParkingAttendant(db.Model):
+    __tablename__ = "parkingAttendant"
+    parkingAttendantId = db.Column(db.Integer, autoincrement=True, primary_key=True)
 
-class ParkingAttendant(Person):
-    __mapper_args__ = {'polymorphic_identity' : 'parkingAttendant'}
     joiningDate = db.Column(db.DateTime, nullable = False)
     leavingDate = db.Column(db.DateTime, nullable = True)
     floor = db.Column(db.Integer, nullable = False)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
+    emailID = db.Column(db.String, nullable = False)
+    salary = db.Column(db.Integer, nullable = False)
 
-    @declared_attr
-    def emailID(self, cls):
-        return Person.__table__.c.get('emailID', db.Column(db.String))
+    firstName = db.Column(db.String, nullable = False)
+    middleName = db.Column(db.String, nullable = True)
+    lastName = db.Column(db.String, nullable = False)
+    address = db.Column(db.String, nullable = False)
+    city = db.Column(db.String, nullable = False)
+    state  = db.Column(db.String, nullable = False)
+    country = db.Column(db.String, nullable = False)
+    pincode = db.Column(db.Integer, nullable = False)
+    contactNumber = db.Column(db.Integer, nullable = False)
 
-    @declared_attr
-    def salary(self, cls):
-        return Person.__table__.c.get('salary', db.Column(db.Integer))
+    def __repr__(self):
+        idLine = "Parking Attendant ID: %s" % (self.parkingAttendantId)
+        nameLine = "First Name: %s, Middle Name: %s, Last Name: %s" % (self.firstName, self.middleName, self.lastName)
+        address = "Address: %s, City: %s, State: %s, Country: %s, Pincode: %s" % (self.address, self.city, self.state, self.country, self.pincode)
+        contactNumber = "Contact Number: %s" % (self.contactNumber)
+        paInfo = "Joining Date: %s, Leaving Date: %s, Stationed At: %s, EmailId: %s, Salary: %s" % (self.joiningDate, self.leavingDate, self.floor, self.emailID, self.salary)
+        return '\n'.join([idLine, nameLine, address, contactNumber, paInfo])
 
 class Vehicle(db.Model):
     __tablename__ = "vehicle"
     vehicleNumber = db.Column(db.String, primary_key = True)
     ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
-    customerID = db.Column(db.Integer, db.ForeignKey("person.id"), nullable = False)
+    customerID = db.Column(db.Integer, db.ForeignKey("customer.customerID"), nullable = False)
     wheels = db.Column(db.Integer, nullable = False)
     vehicleType = db.Column(db.String, nullable = False)
 
 class Ticket(db.Model):
     __tablename__ = "ticket"
     ticketNumber = db.Column(db.String, primary_key = True)
-    customerID = db.Column(db.Integer, db.ForeignKey("person.id"), nullable = False)
+    customerID = db.Column(db.Integer, db.ForeignKey("customer.customerID"), nullable = False)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
-    ParkingAttendantID = db.Column(db.Integer, db.ForeignKey("person.id"), nullable = True)
+    parkingAttendantID = db.Column(db.Integer, db.ForeignKey("parkingAttendant.parkingAttendantId"), nullable = True)
     inTime = db.Column(db.DateTime, nullable = False)
     outTime = db.Column(db.DateTime, nullable = True)
     chargingFee = db.Column(db.Integer, nullable = True)
@@ -120,7 +146,7 @@ class DisplayBoard(db.Model):
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
     floorNumber = db.Column(db.Integer, nullable = False)
     message = db.Column(db.String, nullable = True)
-    userID = db.Column(db.Integer, db.ForeignKey("person.id"), nullable = True)
+    userID = db.Column(db.Integer, db.ForeignKey("parkingAttendant.parkingAttendantId"), nullable = True)
     timeStamp = db.Column(db.DateTime, nullable = True)
     entryPointID = db.Column(db.Integer, db.ForeignKey("entryPoint.id"), nullable = True)
     exitPointID = db.Column(db.Integer, db.ForeignKey("exitPoint.id"), nullable = True)
@@ -131,7 +157,7 @@ class ParkingSpot(db.Model):
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
     floorNumber = db.Column(db.Integer, nullable = False)
     spotType = db.Column(db.String, nullable = False)
-    status = db.Column(db.Bool, nullable = False)
+    status = db.Column(db.Boolean, nullable = False)
     rowNumber = db.Column(db.Integer, nullable = False)
     columnNumber = db.Column(db.Integer, nullable = False)
 
@@ -139,7 +165,7 @@ class Capacity(db.Model):
     __tablename__ = "capacity"
     floorNumber = db.Column(db.Integer, primary_key = True)
     totalFloors = db.Column(db.Integer, nullable = False)
-    parkingLotID = db.Column(db.Integer, primary_key = True, db.ForeignKey("parkingLot.id"), nullable = False)    
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True, nullable = False)    
     carSpots = db.Column(db.Integer, nullable = False)
     bikeSpots = db.Column(db.Integer, nullable = False)
     heavyWeightSpots = db.Column(db.Integer, nullable = False)

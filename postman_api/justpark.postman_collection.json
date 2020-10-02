@@ -1,0 +1,37 @@
+{
+	"variables": [],
+	"info": {
+		"name": "justpark",
+		"_postman_id": "02881284-71af-b4f1-b407-5299af8617a9",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Local host customer entry",
+			"request": {
+				"url": "localhost:5000/enter/customer/3/2",
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"description": "",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"firstName\": \"Mungeri\",\n\t\"lastName\": \"Lal\",\n\t\"address\": \"Bangla number 334, Gali 5\",\n\t\"city\": \"Gurugram\",\n\t\"state\": \"Delhi NCR\",\n\t\"country\": \"India\",\n\t\"pincode\": \"123132\",\n\t\"personType\": \"Customer\",\n\t\"contactNumber\": \"919876543210\",\n\t\"vehicleNumber\": \"CH03BW2323\",\n\t\"vehicleType\": \"Truck\"\n}"
+				},
+				"description": "Sample customer entry API call"
+			},
+			"response": []
+		}
+	]
+}
