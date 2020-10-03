@@ -2,13 +2,17 @@ from justpark import db
 from justpark.models import *
 import csv
 db.create_all()
-parkingLot = ParkingLot(id = 1,
-                       city = "chandigarh",
-                       state  = "chandigarh",
-                       country = "India",
-                       pincode = 160047)
-db.session.add(parkinglot)
 def main():
+    p = open("startingParkingLot.csv")
+    p_reader = csv.reader(p)
+    for id, city, state, country, pincode in p_reader:
+        parkingLot = ParkingLot(id = id,
+                                city = city,
+                                state  = state,
+                                country = country,
+                                pincode = pincode)
+        db.session.add(parkinglot)
+
     c = open("startingCapacity.csv")
     c_reader = csv.reader(c)
     for floorNumber, totalFloors, parkingLotID, carSpots, bikeSpots, truckSpots, electricCarSpots in c_reader:

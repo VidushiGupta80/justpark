@@ -2,6 +2,7 @@ from justpark import app, db
 from time import time
 from flask import jsonify, request
 from justpark.models import Customer, Ticket
+from justpark.log import VehicleLog
 from justpark.utils import generateTicketNumber, generateCustomerId
 from justpark.exceptions import DatabaseException
 import datetime
@@ -11,7 +12,7 @@ def isPaid(ticketNumber):
     ticketPaid = True if time()%10 < 5 else False
     return jsonify({'status': 200, 'isPaid': ticketPaid})
 
-@app.route('/enter/customer/<int:floorNumber>/<int:entryNumber>', methods=['POST'])
+@app.route('/enter/customer/<int:parkingLotID>/<int:floorNumber>/<int:entryNumber>/<int:spotID>', methods=['POST'])
 def makeCustomerEntry(floorNumber, entryNumber):
     request_body = request.json
     ticketNumber = generateTicketNumber()
@@ -44,6 +45,14 @@ def makeCustomerEntry(floorNumber, entryNumber):
                       customerID = customerObj.customerID,
                       vehicleType =  request_body['vehicleType'])
     db.session.add(vehicle)
+    logger = VeicleLog(vehicleNumber = customerObj.vehicleNumber,
+                    inTime = inTime,
+                    entryPoint = entryNumber,
+                    vehicleType = request_body['vehicleType'],
+                    spotID = spotID,
+                    parkingLotID = parkingLotID,
+                    floorNumber = floorNumber)
+    db.session.add(logger)
     db.session.commit()
     return jsonify({'status': 200, 'ticket': {
                         'ticketNumber': ticket.ticketNumber,
