@@ -41,7 +41,7 @@ def makeCustomerEntry(floorNumber, entryNumber):
     db.session.add(ticket)
     vehicle = Vehicle(vehicleNumber = customerObj.vehicleNumber,
                       ticketNumber = ticketNumber,
-                      customerID = ustomerObj.customerID,
+                      customerID = customerObj.customerID,
                       vehicleType =  request_body['vehicleType'])
     db.session.add(vehicle)
     db.session.commit()

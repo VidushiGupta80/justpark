@@ -164,7 +164,7 @@ class Capacity(db.Model):
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True, nullable = False)    
     carSpots = db.Column(db.Integer, nullable = False)
     bikeSpots = db.Column(db.Integer, nullable = False)
-    heavyWeightSpots = db.Column(db.Integer, nullable = False)
+    TruckSpots = db.Column(db.Integer, nullable = False)
     electricCarSpots = db.Column(db.Integer, nullable = False)
 
 

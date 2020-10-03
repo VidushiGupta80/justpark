@@ -3,21 +3,21 @@ from justpark.models import *
 import csv
 db.create_all()
 parkingLot = ParkingLot(id = 1,
-                       city = chandigarh,
-                       state  = chandigarh,
-                       country = India,
+                       city = "chandigarh",
+                       state  = "chandigarh",
+                       country = "India",
                        pincode = 160047)
 db.session.add(parkinglot)
 def main():
     c = open("startingCapacity.csv")
     c_reader = csv.reader(c)
-    for floorNumber, totalFloors, parkingLotID, carSpots, bikeSpots, heavyWeightSpots, electricCarSpots in c_reader:
+    for floorNumber, totalFloors, parkingLotID, carSpots, bikeSpots, truckSpots, electricCarSpots in c_reader:
         capacity = Capacity(floorNumber = floorNumber,
                             totalFloors = totalFloors,
                             parkingLotID =   parkingLotID,
                             carSpots = carSpots,
                             bikeSpots = bikeSpots,
-                            heavyWeightSpots = heavyWeightSpots,
+                            truckSpots = truckSpots,
                             electricCarSpots = electricCarSpots)
         db.session.add(capacity)
 
