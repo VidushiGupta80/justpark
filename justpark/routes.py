@@ -39,6 +39,11 @@ def makeCustomerEntry(floorNumber, entryNumber):
                     outTime = None,
                     chargingFee = None)
     db.session.add(ticket)
+    vehicle = Vehicle(vehicleNumber = customerObj.vehicleNumber,
+                      ticketNumber = ticketNumber,
+                      customerID = ustomerObj.customerID,
+                      vehicleType =  request_body['vehicleType'])
+    db.session.add(vehicle)
     db.session.commit()
     return jsonify({'status': 200, 'ticket': {
                         'ticketNumber': ticket.ticketNumber,

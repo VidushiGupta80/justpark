@@ -1,0 +1,9 @@
+id,parkingLotID,floorNumber,message,userID,timeStamp,entryPointID,exitPointID
+1,1,1,none,none,none,1,none
+2,1,1,none,none,none,2,none
+3,1,2,none,none,none,1,none
+4,1,2,none,none,none,2,none
+5,1,1,none,none,none,none,1
+6,1,1,none,none,none,none,2
+7,1,2,none,none,none,none,1
+8,1,2,none,none,none,none,2

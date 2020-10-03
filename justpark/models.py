@@ -1,4 +1,3 @@
-from sqlalchemy.ext.declarative import declared_attr
 from justpark import db
 
 class ParkingLot(db.Model):
@@ -12,29 +11,25 @@ class ParkingLot(db.Model):
 class ExitPoint(db.Model):
     __tablename__ = "exitPoint"
     id = db.Column(db.Integer, primary_key = True)
-    floorNumber = db.Column(db.Integer, nullable = False)
+    floorNumber = db.Column(db.Integer, primary_key = True)
     vehicleCount = db.Column(db.Integer, nullable = False)    
     displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)
-    vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
-    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
 
 class EntryPoint(db.Model):
     __tablename__ = "entryPoint"
     id = db.Column(db.Integer, primary_key = True)
-    floorNumber = db.Column(db.Integer, nullable = False)
+    floorNumber = db.Column(db.Integer, primary_key = True)
     vehicleCount = db.Column(db.Integer, nullable = False)
-    displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)
-    vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
-    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
+    displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)    
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
 
 class Customer(db.Model):
     __tablename__ = "customer"
     customerID = db.Column(db.String, primary_key = True)
-
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
     vehicleType = db.Column(db.String, nullable = False)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
-   
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)   
     firstName = db.Column(db.String, nullable = False)
     middleName = db.Column(db.String, nullable = True)
     lastName = db.Column(db.String, nullable = False)
@@ -81,13 +76,11 @@ class Admin(db.Model):
 class ParkingAttendant(db.Model):
     __tablename__ = "parkingAttendant"
     parkingAttendantId = db.Column(db.Integer, autoincrement=True, primary_key=True)
-
     joiningDate = db.Column(db.DateTime, nullable = False)
     leavingDate = db.Column(db.DateTime, nullable = True)
     floor = db.Column(db.Integer, nullable = False)
     emailID = db.Column(db.String, nullable = False)
     salary = db.Column(db.Integer, nullable = False)
-
     firstName = db.Column(db.String, nullable = False)
     middleName = db.Column(db.String, nullable = True)
     lastName = db.Column(db.String, nullable = False)
@@ -111,7 +104,6 @@ class Vehicle(db.Model):
     vehicleNumber = db.Column(db.String, primary_key = True)
     ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
     customerID = db.Column(db.Integer, db.ForeignKey("customer.customerID"), nullable = False)
-    wheels = db.Column(db.Integer, nullable = False)
     vehicleType = db.Column(db.String, nullable = False)
 
 class Ticket(db.Model):
@@ -126,25 +118,29 @@ class Ticket(db.Model):
 
 class ChargingPanel(db.Model):
     __tablename__ = "chargingPanel"
-    spotID = db.Column(db.String, primary_key = True)
+    spotID = db.Column(db.Integer, primary_key = True)
+    floorNumber = db.Column(db.Integer, primary_key = True)
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
     rate = db.Column(db.Integer, nullable = False)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
-    vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
-    lastConnectionID = db.Column(db.Integer, db.ForeignKey("lastConnection.id"), nullable = True)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = True)
+    vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = True)
+    lastConnectionID = db.Column(db.Integer, db.ForeignKey("lastConnection.id"),  primary_key = True)
 
 class LastConnection(db.Model):
     __tablename__ = "lastConnection"
     id = db.Column(db.Integer, primary_key = True)
-    connect = db.Column(db.DateTime, nullable = True)
+    floorNumber = db.Column(db.Integer, primary_key = True)
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
+    connect = db.Column(db.DateTime, nullable = False)
     disconnect = db.Column(db.DateTime, nullable = True)
-    spotID = db.Column(db.String, db.ForeignKey("chargingPanel.spotID"), nullable = True)
+    spotID = db.Column(db.Integer, db.ForeignKey("chargingPanel.spotID"), primary_key = True)
     ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
 
 class DisplayBoard(db.Model):
     __tablename__ = "displayBoard"
     id = db.Column(db.Integer, primary_key = True)
-    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
-    floorNumber = db.Column(db.Integer, nullable = False)
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
+    floorNumber = db.Column(db.Integer, primary_key = True)
     message = db.Column(db.String, nullable = True)
     userID = db.Column(db.Integer, db.ForeignKey("parkingAttendant.parkingAttendantId"), nullable = True)
     timeStamp = db.Column(db.DateTime, nullable = True)
@@ -153,10 +149,10 @@ class DisplayBoard(db.Model):
 
 class ParkingSpot(db.Model):
     __tablename__ = "parkingSpot"
-    spotID = db.Column(db.String, primary_key = True)
-    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), nullable = False)
-    floorNumber = db.Column(db.Integer, nullable = False)
-    spotType = db.Column(db.String, nullable = False)
+    spotID = db.Column(db.Integer, primary_key = True)
+    parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
+    floorNumber = db.Column(db.Integer, primary_key = True)
+    spotType = db.Column(db.String, primary_key = True)
     status = db.Column(db.Boolean, nullable = False)
     rowNumber = db.Column(db.Integer, nullable = False)
     columnNumber = db.Column(db.Integer, nullable = False)
