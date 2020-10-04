@@ -6,11 +6,45 @@ from justpark.log import VehicleLog
 from justpark.utils import generateTicketNumber, generateCustomerId
 from justpark.exceptions import DatabaseException
 import datetime
+import json
+import math
 
 @app.route('/ispaid/<string:ticketNumber>', methods=['GET'])
 def isPaid(ticketNumber):
     ticketPaid = True if time()%10 < 5 else False
     return jsonify({'status': 200, 'isPaid': ticketPaid})
+
+@app.route('/getamount/<string:ticketNumber>', methods=['GET'])
+def amount(ticketNumber):
+    ticket = Ticket.query.get(ticketNumber)
+    if ticket is None:
+        return DatabaseException("This ticket does not exist")
+    checkTime = datetime.datetime.utcnow()
+    timeDuration = checkTime - ticket.inTime
+    timeDurationHours = math.ceil(timeDuration.total_second() / 3600)
+    vehicleNumber = ticket.vehicleNumber
+    vehicleInfo = Vehicle.query.get(vehicleNumber)
+    vehicleType = vehicleInfo.vehicleType
+    rate = Rate.query.get(vehicleType)      
+    parkingFee = rate.parkingRate * timeDurationHours
+    chargingHours = 0
+    chargingFee = 0
+    if vehicleType == 'Electric Car':
+        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber = ticket).all()
+        if connections is not None:
+            for connect, disconnect in connection:
+                if disconnect is None:
+                    return jsonify({'Ticket number': ticketNumber,
+                                    'Parking fee': parkingFee, 
+                                    'Charging fee': DatabaseException("Your electric car is connected to charging panel") }) 
+                chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
+        chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType = vehicleType).one()
+        chargingFee = chargingRate * chargingHours
+    return jsonify({'Ticket number': ticketNumber,
+                    'Parking fee': parkingFee, 
+                    'Charging fee': chargingFee})
+
+
 
 @app.route('/getfreespots/<int:parkingLoyID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])
 def getFreeSpots(parkingLotID, floorNumber, vehicleType):

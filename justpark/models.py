@@ -121,19 +121,19 @@ class ChargingPanel(db.Model):
     spotID = db.Column(db.Integer, primary_key = True)
     floorNumber = db.Column(db.Integer, primary_key = True)
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
-    rate = db.Column(db.Integer, nullable = False)
+    lastConnectionID = db.Column(db.Integer, db.ForeignKey("lastConnection.id"),  primary_key = True)
     ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = True)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = True)
-    lastConnectionID = db.Column(db.Integer, db.ForeignKey("lastConnection.id"),  primary_key = True)
+    
 
 class LastConnection(db.Model):
     __tablename__ = "lastConnection"
     id = db.Column(db.Integer, primary_key = True)
     floorNumber = db.Column(db.Integer, primary_key = True)
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
-    connect = db.Column(db.DateTime, nullable = False)
-    disconnect = db.Column(db.DateTime, nullable = True)
     spotID = db.Column(db.Integer, db.ForeignKey("chargingPanel.spotID"), primary_key = True)
+    connect = db.Column(db.DateTime, nullable = False)
+    disconnect = db.Column(db.DateTime, nullable = True)    
     ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
 
 class DisplayBoard(db.Model):
@@ -167,5 +167,14 @@ class Capacity(db.Model):
     TruckSpots = db.Column(db.Integer, nullable = False)
     electricCarSpots = db.Column(db.Integer, nullable = False)
 
+class Rate(db.Model):
+    __tablename__ = "rate"
+    vehicleType = db.Column(db.String, primary_key = True)
+    parkingRate = db.Column(db.Integer, nullable = False)
+
+class ChargingRate(db.Model):
+    __tablename__ = "chargingRate"
+    vehicleType = db.Column(db.String, primary_key = True)
+    rate = db.Column(db.Integer, nullable = False)
 
 

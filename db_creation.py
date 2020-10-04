@@ -69,4 +69,18 @@ def main():
                                     entryPointID = entryPointID,
                                     exitPointID = exitPointID)
         db.session.add(displayBoard)
+
+    rates = open("startingRate.csv")
+    rates_reader = csv.reader(rates)
+    for vehicleType, parkingRates in rates_reader:
+        addRate = Rate(vehicleType = vehicleType,
+                       parkingRates = parkingRates)
+        db.session.add(addRate)
+
+    charging = open("startingChargingRate.csv")
+    charging_reader = csv.reader(charging)
+    for vehicleType, rate in charging_reader:
+        addRate = ChargingRate(vehicleType = vehicleType,
+                               rate = rate)
+        db.session.add(addRate)    
  db.session.commit()
