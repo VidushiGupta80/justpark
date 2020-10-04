@@ -30,7 +30,7 @@ def amount(ticketNumber):
     chargingHours = 0
     chargingFee = 0
     if vehicleType == 'Electric Car':
-        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber = ticket).all()
+        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber = ticketNumber).all()
         if connections is not None:
             for connect, disconnect in connection:
                 if disconnect is None:
@@ -44,6 +44,34 @@ def amount(ticketNumber):
                     'Parking fee': parkingFee, 
                     'Charging fee': chargingFee})
 
+@app.route('/getamount/<string:vehicleNumber>', methods=['GET'])
+def amount(vehicleNumber):
+    vehicleInfo = Vehicle.query.get(vehicleNumber)
+    if vehicleInfo is None:
+        return DatabaseException("This vehicle is not inside this parking lot")
+    ticket = Ticket.query.filter_by(Ticket.vehicleNumber = vehicleNumber)
+    checkTime = datetime.datetime.utcnow()
+    timeDuration = checkTime - ticket.inTime
+    timeDurationHours = math.ceil(timeDuration.total_second() / 3600)
+    vehicleType = vehicleInfo.vehicleType
+    rate = Rate.query.get(vehicleType)      
+    parkingFee = rate.parkingRate * timeDurationHours
+    chargingHours = 0
+    chargingFee = 0
+    if vehicleType == 'Electric Car':
+        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber = ticket.ticketNumber).all()
+        if connections is not None:
+            for connect, disconnect in connection:
+                if disconnect is None:
+                    return jsonify({'Ticket number': ticket.ticketNumber,
+                                    'Parking fee': parkingFee, 
+                                    'Charging fee': DatabaseException("Your electric car is connected to charging panel") }) 
+                chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
+        chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType = vehicleType).one()
+        chargingFee = chargingRate * chargingHours
+    return jsonify({'Ticket number': ticket.ticketNumber,
+                    'Parking fee': parkingFee, 
+                    'Charging fee': chargingFee})
 
 
 @app.route('/getfreespots/<int:parkingLoyID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])

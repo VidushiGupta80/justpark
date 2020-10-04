@@ -114,7 +114,6 @@ class Ticket(db.Model):
     parkingAttendantID = db.Column(db.Integer, db.ForeignKey("parkingAttendant.parkingAttendantId"), nullable = True)
     inTime = db.Column(db.DateTime, nullable = False)
     outTime = db.Column(db.DateTime, nullable = True)
-    chargingFee = db.Column(db.Integer, nullable = True)
 
 class ChargingPanel(db.Model):
     __tablename__ = "chargingPanel"
