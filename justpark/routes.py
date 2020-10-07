@@ -1,7 +1,8 @@
 from justpark import app, db
 from time import time
 from flask import jsonify, request
-from justpark.models import Customer, Ticket
+from sqlalchemy import and_
+from justpark.models import *
 from justpark.log import VehicleLog
 from justpark.utils import generateTicketNumber, generateCustomerId
 from justpark.exceptions import DatabaseException
@@ -9,19 +10,20 @@ import datetime
 import json
 import math
 
-@app.route('/ispaid/<string:ticketNumber>', methods=['GET'])
+@app.route('/isPaid/<string:ticketNumber>', methods=['GET'])
 def isPaid(ticketNumber):
     ticketPaid = True if time()%10 < 5 else False
     return jsonify({'status': 200, 'isPaid': ticketPaid})
 
-@app.route('/getamount/<string:ticketNumber>', methods=['GET'])
-def amount(ticketNumber):
+@app.route('/getAmount/ticketNumber/<string:ticketNumber>', methods=['GET'])
+def getAmountTicket(ticketNumber):
     ticket = Ticket.query.get(ticketNumber)
+    print(ticket)
     if ticket is None:
-        return DatabaseException("This ticket does not exist")
+        raise DatabaseException("This ticket does not exist")
     checkTime = datetime.datetime.utcnow()
     timeDuration = checkTime - ticket.inTime
-    timeDurationHours = math.ceil(timeDuration.total_second() / 3600)
+    timeDurationHours = math.ceil(timeDuration.total_seconds() / 3600)
     vehicleNumber = ticket.vehicleNumber
     vehicleInfo = Vehicle.query.get(vehicleNumber)
     vehicleType = vehicleInfo.vehicleType
@@ -30,7 +32,7 @@ def amount(ticketNumber):
     chargingHours = 0
     chargingFee = 0
     if vehicleType == 'Electric Car':
-        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber = ticketNumber).all()
+        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber == ticketNumber).all()
         if connections is not None:
             for connect, disconnect in connection:
                 if disconnect is None:
@@ -38,28 +40,28 @@ def amount(ticketNumber):
                                     'Parking fee': parkingFee, 
                                     'Charging fee': DatabaseException("Your electric car is connected to charging panel") }) 
                 chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
-        chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType = vehicleType).one()
+        chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
         chargingFee = chargingRate * chargingHours
     return jsonify({'Ticket number': ticketNumber,
                     'Parking fee': parkingFee, 
                     'Charging fee': chargingFee})
 
-@app.route('/getamount/<string:vehicleNumber>', methods=['GET'])
-def amount(vehicleNumber):
+@app.route('/getAmount/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
+def getAmountVehicle(vehicleNumber):
     vehicleInfo = Vehicle.query.get(vehicleNumber)
     if vehicleInfo is None:
-        return DatabaseException("This vehicle is not inside this parking lot")
-    ticket = Ticket.query.filter_by(Ticket.vehicleNumber = vehicleNumber)
+        raise DatabaseException("This vehicle is not inside this parking lot")
+    ticket = Ticket.query.filter_by(vehicleNumber = vehicleNumber).first()
     checkTime = datetime.datetime.utcnow()
     timeDuration = checkTime - ticket.inTime
-    timeDurationHours = math.ceil(timeDuration.total_second() / 3600)
+    timeDurationHours = math.ceil(timeDuration.total_seconds() / 3600)
     vehicleType = vehicleInfo.vehicleType
     rate = Rate.query.get(vehicleType)      
     parkingFee = rate.parkingRate * timeDurationHours
     chargingHours = 0
     chargingFee = 0
     if vehicleType == 'Electric Car':
-        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber = ticket.ticketNumber).all()
+        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber == ticket.ticketNumber).all()
         if connections is not None:
             for connect, disconnect in connection:
                 if disconnect is None:
@@ -67,16 +69,16 @@ def amount(vehicleNumber):
                                     'Parking fee': parkingFee, 
                                     'Charging fee': DatabaseException("Your electric car is connected to charging panel") }) 
                 chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
-        chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType = vehicleType).one()
+        chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
         chargingFee = chargingRate * chargingHours
     return jsonify({'Ticket number': ticket.ticketNumber,
                     'Parking fee': parkingFee, 
                     'Charging fee': chargingFee})
 
 
-@app.route('/getfreespots/<int:parkingLoyID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])
+@app.route('/getFreeSpots/<int:parkingLotID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])
 def getFreeSpots(parkingLotID, floorNumber, vehicleType):
-    allSpots = ParkingSpot.query.filter_by(and_(ParkingSpot.parkingLotID = parkingLotID, ParkingSpot.floorNumber = floorNumber, ParkingSpot.spotType = vehicleType)).all()
+    allSpots = ParkingSpot.query.filter(and_(ParkingSpot.parkingLotID == parkingLotID, ParkingSpot.floorNumber == floorNumber, ParkingSpot.spotType == vehicleType)).all()
     spotsAsDict = []
     for spot in allSpots:
         spotDict = {
@@ -116,7 +118,7 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                     parkingAttendantID = None,
                     inTime = inTime,
                     outTime = None,
-                    chargingFee = None)
+                    chargingFees = None)
     db.session.add(ticket)
     # add vehicle info
     vehicle = Vehicle(vehicleNumber = customerObj.vehicleNumber,
@@ -125,22 +127,26 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                       vehicleType =  request_body['vehicleType'])
     db.session.add(vehicle)
     # update free spot
-    spot = ParkingSpot.query.get(spotID = spotID, parkingLotID = parkingLotID, floorNumber = floorNumber, spotType = request_body['vehicleType'])
-    spot.status = True
+    db.session.query(ParkingSpot).filter(and_(ParkingSpot.spotID == spotID,
+                                              ParkingSpot.parkingLotID == parkingLotID,
+                                              ParkingSpot.floorNumber == floorNumber,
+                                              ParkingSpot.spotType == request_body['vehicleType'])).update({'status': True})
     # add vehicle info in log table
-    logger = VeicleLog(vehicleNumber = customerObj.vehicleNumber,
-                    inTime = inTime,
-                    entryPoint = entryNumber,
-                    vehicleType = request_body['vehicleType'],
-                    spotID = spotID,
-                    parkingLotID = parkingLotID,
-                    floorNumber = floorNumber)
+    logger = VehicleLog(vehicleNumber = customerObj.vehicleNumber,
+                        inTime = inTime,
+                        entryPoint = entryNumber,
+                        vehicleType = request_body['vehicleType'],
+                        spotID = spotID,
+                        parkingLotID = parkingLotID,
+                        floorNumber = floorNumber)
     db.session.add(logger)
     db.session.commit()
-    return jsonify({'status': 200, 'ticket': {
-                        'ticketNumber': ticket.ticketNumber,
-                        'customerId': ticket.customerID,
-                        'vehicleNumber': ticket.vehicleNumber,
-                        'inTime': inTime
-                        }})
-                        
+    return jsonify({'status': 200,
+                    'ticket': {
+                                'ticketNumber': ticket.ticketNumber,
+                                'customerId': ticket.customerID,
+                                'vehicleNumber': ticket.vehicleNumber,
+                                'inTime': inTime
+                              }
+                    }
+                   )

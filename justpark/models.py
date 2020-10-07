@@ -8,6 +8,9 @@ class ParkingLot(db.Model):
     country = db.Column(db.String, nullable = False)
     pincode = db.Column(db.Integer, nullable = False)
 
+    def __repr__(self):
+        return "Parking Lot ID: %s, City: %s, State: %s, Country: %s, Pincode: %s" % (self.id, self.city, self.state, self.country, self.pincode)
+
 class ExitPoint(db.Model):
     __tablename__ = "exitPoint"
     id = db.Column(db.Integer, primary_key = True)
@@ -114,6 +117,10 @@ class Ticket(db.Model):
     parkingAttendantID = db.Column(db.Integer, db.ForeignKey("parkingAttendant.parkingAttendantId"), nullable = True)
     inTime = db.Column(db.DateTime, nullable = False)
     outTime = db.Column(db.DateTime, nullable = True)
+    chargingFees = db.Column(db.Integer, nullable = True)
+
+    def _repr__(self):
+        return "inTime: %s" % self.inTime
 
 class ChargingPanel(db.Model):
     __tablename__ = "chargingPanel"
@@ -123,7 +130,6 @@ class ChargingPanel(db.Model):
     lastConnectionID = db.Column(db.Integer, db.ForeignKey("lastConnection.id"),  primary_key = True)
     ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = True)
     vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = True)
-    
 
 class LastConnection(db.Model):
     __tablename__ = "lastConnection"
@@ -163,7 +169,7 @@ class Capacity(db.Model):
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True, nullable = False)    
     carSpots = db.Column(db.Integer, nullable = False)
     bikeSpots = db.Column(db.Integer, nullable = False)
-    TruckSpots = db.Column(db.Integer, nullable = False)
+    truckSpots = db.Column(db.Integer, nullable = False)
     electricCarSpots = db.Column(db.Integer, nullable = False)
 
 class Rate(db.Model):
@@ -175,5 +181,3 @@ class ChargingRate(db.Model):
     __tablename__ = "chargingRate"
     vehicleType = db.Column(db.String, primary_key = True)
     rate = db.Column(db.Integer, nullable = False)
-
-

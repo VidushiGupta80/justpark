@@ -10,7 +10,7 @@
 		{
 			"name": "Local host customer entry",
 			"request": {
-				"url": "localhost:5000/enter/customer/3/2",
+				"url": "localhost:5000/enter/customer/1/2/2/5",
 				"method": "POST",
 				"header": [
 					{
@@ -30,6 +30,39 @@
 					"raw": "{\n\t\"firstName\": \"Mungeri\",\n\t\"lastName\": \"Lal\",\n\t\"address\": \"Bangla number 334, Gali 5\",\n\t\"city\": \"Gurugram\",\n\t\"state\": \"Delhi NCR\",\n\t\"country\": \"India\",\n\t\"pincode\": \"123132\",\n\t\"personType\": \"Customer\",\n\t\"contactNumber\": \"919876543210\",\n\t\"vehicleNumber\": \"CH03BW2323\",\n\t\"vehicleType\": \"Truck\"\n}"
 				},
 				"description": "Sample customer entry API call"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Free spots",
+			"request": {
+				"url": "localhost:5000/getFreeSpots/1/2/Truck",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "get amount",
+			"request": {
+				"url": "localhost:5000/getAmount/vehicleNumber/CH03BW2323",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "get amount ticket number",
+			"request": {
+				"url": "localhost:5000/getAmount/ticketNumber/T780760589845548519818",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
 			},
 			"response": []
 		}
