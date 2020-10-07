@@ -38,7 +38,7 @@ def getAmountTicket(ticketNumber):
                 if disconnect is None:
                     return jsonify({'Ticket number': ticketNumber,
                                     'Parking fee': parkingFee, 
-                                    'Charging fee': DatabaseException("Your electric car is connected to charging panel") }) 
+                                    'Charging fee': "Your electric car is connected to charging panel"})
                 chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
         chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
         chargingFee = chargingRate * chargingHours
@@ -67,7 +67,7 @@ def getAmountVehicle(vehicleNumber):
                 if disconnect is None:
                     return jsonify({'Ticket number': ticket.ticketNumber,
                                     'Parking fee': parkingFee, 
-                                    'Charging fee': DatabaseException("Your electric car is connected to charging panel") }) 
+                                    'Charging fee': "Your electric car is connected to charging panel"})
                 chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
         chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
         chargingFee = chargingRate * chargingHours
