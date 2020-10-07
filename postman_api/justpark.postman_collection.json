@@ -58,7 +58,7 @@
 		{
 			"name": "get amount ticket number",
 			"request": {
-				"url": "localhost:5000/getAmount/ticketNumber/T780760589845548519818",
+				"url": "localhost:5000/getAmount/ticketNumber/T516870846165764908145",
 				"method": "GET",
 				"header": [],
 				"body": {},
