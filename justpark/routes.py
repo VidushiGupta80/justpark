@@ -190,11 +190,17 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                     }
                    )
 @app.route('/isPaid/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
-def isPaid(vehicleNumber):
+def isPaidThroughVehicleNumber(vehicleNumber):
     # getting vehicle object for given vehicle number
     vehicle = Vehicle.query.filter_by(vehicleNumber = vehicleNumber).first()
     # getting ticket object for given ticket number
     ticket = Ticket.query.filter_by(ticketNumber = vehicle.ticketNumber).first()
+    return jsonify({'status': 200, 'isPaid': ticket.isPaid})
+
+@app.route('/isPaid/ticketNumber/<string:ticketNumber>', methods=['GET'])
+def isPaidThroughTicketNumber(ticketNumber):
+    # getting ticket object for given ticket number
+    ticket = Ticket.query.filter_by(ticketNumber = ticketNumber).first()
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
 @app.route('/pay', methods=['POST'])
