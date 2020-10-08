@@ -58,10 +58,41 @@
 		{
 			"name": "get amount ticket number",
 			"request": {
-				"url": "localhost:5000/getAmount/ticketNumber/T516870846165764908145",
+				"url": "localhost:5000/getAmount/ticketNumber/T192402285485357524681",
 				"method": "GET",
 				"header": [],
 				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "isPaid api",
+			"request": {
+				"url": "localhost:5000/isPaid/vehicleNumber/CH03BW2323",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Pay api",
+			"request": {
+				"url": "localhost:5000/pay",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\n\t\"ticketNumber\": \"T192402285485357524681\",\n\t\"amount\": 30,\n\t\"mode\": \"Cash\"\n}"
+				},
 				"description": ""
 			},
 			"response": []
