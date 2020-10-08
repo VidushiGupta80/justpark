@@ -36,8 +36,10 @@ Response Body:
 <pre>
 Request Body:
                 {
-                    customerVehicleNumber:
-                    ticketNo:
+                    parkingAttendantID:
+                    parkingLotID:
+                    floorNumber:
+                    exitNumber:
                 }
 Response Body:
                 {

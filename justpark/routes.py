@@ -85,7 +85,7 @@ def getAmountVehicle(vehicleNumber):
     # calculating charging fee if the vehicle type is electric car
     if vehicleType == 'Electric Car':
         # getting all connections made by the vehicle with the charging panel
-        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber == ticket.ticketNumber).all()
+        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(ticketNumber = ticket.ticketNumber).all()
         if connections is not None:
             for connect, disconnect in connection:
                 # sending a message if the vehicle is still connected to the charging panel
@@ -156,7 +156,8 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                     parkingAttendantID = None,
                     inTime = inTime,
                     outTime = None,
-                    isPaid = False)
+                    isPaid = False,
+                    spotID = spotID)
     db.session.add(ticket)
     # add vehicle info
     vehicle = Vehicle(vehicleNumber = customerObj.vehicleNumber,
@@ -178,6 +179,9 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                         parkingLotID = parkingLotID,
                         floorNumber = floorNumber)
     db.session.add(logger)
+    # updating entry point vehicle count
+    entryPoint = EntryPoint.query.filtery_by(and_(id = entryNumber, floorNumber = floorNumber, parkingLotID = parkingLotID)).first()
+    entryPoint.vehicleCount += 1
     db.session.commit()
     return jsonify({'status': 200,
                     'ticket': {
@@ -214,10 +218,35 @@ def checkOutTicket():
     db.session.commit()
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
-@app.route('/exit/customer/<string:ticketNumber>/<int:parkingAttendantID>', methods = ['POST'])
-def exitCustomer(ticketNumber, parkingAttendantID):
+@app.route('/exit/customer/<string:ticketNumber>', methods = ['POST'])
+def exitCustomer(ticketNumber):
+    requestBody = request.json
     outTime = datetime.datetime.utcnow()
     ticket = Ticket.query.get(ticketNumber)
+    if ticket is None:
+        raise DatabaseException("Invalid ticket")
+    # updating ticket
     ticket.outTime = outTime
-    ticket.parkingAttendantID = parkingAttendantID
+    ticket.parkingAttendantID = requestBody['parkingAttendantID']
+    # updating exit point vehicle count
+    exitPoint = ExitPoint.query.filter_by(and_(id = requestBody['exitNumber'], floorNumber = requestBody['floorNumber']. parkingLotID = requestBody['parkingLotID'])).first()
+    exitPoint.vehicleCount += 1
+    # updating free spots
+    spotID = ticket.spotID
+    vehicle = Vehicle.query.filter_by(ticketNumber = ticketNumber).first()
+    parkingSpot = ParkingSpot.query.filter_by(and_(spotID = spotID, parkingLotID = requestBody['parkingLotID'], floorNumber = requestBody['floorNumber'], spotType = vehicle.vehicleType)).first()
+    parkingSpot.status = False
+    # updating vehicle log
+    logger = VehicleLog.query.filter_by(and_(vehicleNumber = vehicle.vehicleNumber, inTime = ticket.inTime)).first()
+    logger.exitPoint = exitNumber
+    logger.outTime = outTime
+    logger.parkingAttendantID = requestBody['parkingLotID']
+    if ticket.isPaid == False:
+        raise DatabaseException("The ticket is not paid")
+    else:
+        db.session.commit()
+        return jsonify({'status': 200})
+
+
+
     
