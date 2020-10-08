@@ -21,26 +21,38 @@ def getAmountTicket(ticketNumber):
     print(ticket)
     if ticket is None:
         raise DatabaseException("This ticket does not exist")
+    # time of ckecking aount of ticket for total hours
     checkTime = datetime.datetime.utcnow()
-    timeDuration = checkTime - ticket.inTime
+    timeDuration = checkTime - ticket.inTime 
+    # converting time duration from seconds to hours
     timeDurationHours = math.ceil(timeDuration.total_seconds() / 3600)
+    # get vehicle number for vehicle details
     vehicleNumber = ticket.vehicleNumber
+    # object of vehicle of customer
     vehicleInfo = Vehicle.query.get(vehicleNumber)
     vehicleType = vehicleInfo.vehicleType
+    # parking fee rate set by admin for this particluar vehicle type
     rate = Rate.query.get(vehicleType)      
+    # calculating total parking fee till checkout time
     parkingFee = rate.parkingRate * timeDurationHours
     chargingHours = 0
     chargingFee = 0
+    # calculating charging fee if the vehicle type is electric car
     if vehicleType == 'Electric Car':
+        # checking all the connections made with charging panel
         connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber == ticketNumber).all()
         if connections is not None:
             for connect, disconnect in connection:
+                # if the vehicle is still charging, giving a message that charging fee cant be calculated
                 if disconnect is None:
                     return jsonify({'Ticket number': ticketNumber,
                                     'Parking fee': parkingFee, 
                                     'Charging fee': "Your electric car is connected to charging panel"})
+                # calculating total charging hours from every connection
                 chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
+        # getting rate of charging set by admin
         chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
+        # calculating total charging fee till checkout time
         chargingFee = chargingRate * chargingHours
     return jsonify({'Ticket number': ticketNumber,
                     'Parking fee': parkingFee, 
@@ -48,28 +60,40 @@ def getAmountTicket(ticketNumber):
 
 @app.route('/getAmount/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
 def getAmountVehicle(vehicleNumber):
+    # getting vehicle object for the gien vehicle number
     vehicleInfo = Vehicle.query.get(vehicleNumber)
     if vehicleInfo is None:
         raise DatabaseException("This vehicle is not inside this parking lot")
+    # getting ticket object for the given vehicle number
     ticket = Ticket.query.filter_by(vehicleNumber = vehicleNumber).first()
+    # time of checking the amount of ticket
     checkTime = datetime.datetime.utcnow()
     timeDuration = checkTime - ticket.inTime
+    # converting total time duration in hours from seconds
     timeDurationHours = math.ceil(timeDuration.total_seconds() / 3600)
     vehicleType = vehicleInfo.vehicleType
-    rate = Rate.query.get(vehicleType)      
+    # getting parking rate set by admin of the vehicle type 
+    rate = Rate.query.get(vehicleType) 
+    # calculting total parking fee till check time  
     parkingFee = rate.parkingRate * timeDurationHours
     chargingHours = 0
     chargingFee = 0
+    # calculating charging fee if the vehicle type is electric car
     if vehicleType == 'Electric Car':
+        # getting all connections made by the vehicle with the charging panel
         connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber == ticket.ticketNumber).all()
         if connections is not None:
             for connect, disconnect in connection:
+                # sending a message if the vehicle is still connected to the charging panel
                 if disconnect is None:
                     return jsonify({'Ticket number': ticket.ticketNumber,
                                     'Parking fee': parkingFee, 
                                     'Charging fee': "Your electric car is connected to charging panel"})
+                # calculating total hours of charging
                 chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
+        # getting charging rate set by admin
         chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
+        # calculating total charging fee till check time
         chargingFee = chargingRate * chargingHours
     return jsonify({'Ticket number': ticket.ticketNumber,
                     'Parking fee': parkingFee, 
@@ -78,7 +102,9 @@ def getAmountVehicle(vehicleNumber):
 
 @app.route('/getFreeSpots/<int:parkingLotID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])
 def getFreeSpots(parkingLotID, floorNumber, vehicleType):
+    # getting all designed parkingspots of the given vehicle type for given floor number and parking ID
     allSpots = ParkingSpot.query.filter(and_(ParkingSpot.parkingLotID == parkingLotID, ParkingSpot.floorNumber == floorNumber, ParkingSpot.spotType == vehicleType)).all()
+    # converting the result of above query to a list of dictionaries to finally convert it to json object
     spotsAsDict = []
     for spot in allSpots:
         spotDict = {
