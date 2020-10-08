@@ -10,10 +10,11 @@ import datetime
 import json
 import math
 
-@app.route('/isPaid/<string:ticketNumber>', methods=['GET'])
+@app.route('/isPaid/ticketNumber/<string:ticketNumber>', methods=['GET'])
 def isPaid(ticketNumber):
-    ticketPaid = True if time()%10 < 5 else False
-    return jsonify({'status': 200, 'isPaid': ticketPaid})
+    # getting ticket object for given ticket number
+    ticket = Ticket.query.filter_by(ticketNumber = ticketNumber)
+    return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
 @app.route('/getAmount/ticketNumber/<string:ticketNumber>', methods=['GET'])
 def getAmountTicket(ticketNumber):
@@ -45,18 +46,26 @@ def getAmountTicket(ticketNumber):
             for connect, disconnect in connection:
                 # if the vehicle is still charging, giving a message that charging fee cant be calculated
                 if disconnect is None:
-                    return jsonify({'Ticket number': ticketNumber,
-                                    'Parking fee': parkingFee, 
-                                    'Charging fee': "Your electric car is connected to charging panel"})
+                    return jsonify({'ticketNumber': ticketNumber,
+                                    'vehicleNumber': vehicleNumber,
+                                    'totalParkingHours': timeDurationHours,
+                                    'totalChargingHours': chargingHours, 
+                                    'parkingFee': parkingFee, 
+                                    'chargingFee': "Your electric car is connected to charging panel",
+                                    'totalAmount': parkingFee + chargingFee})
                 # calculating total charging hours from every connection
                 chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
         # getting rate of charging set by admin
         chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
         # calculating total charging fee till checkout time
         chargingFee = chargingRate * chargingHours
-    return jsonify({'Ticket number': ticketNumber,
-                    'Parking fee': parkingFee, 
-                    'Charging fee': chargingFee})
+    return jsonify({'ticketNumber': ticketNumber,
+                    'vehicleNumber': vehicleNumber,
+                    'totalParkingHours': timeDurationHours,
+                    'totalChargingHours': chargingHours, 
+                    'parkingFee': parkingFee, 
+                    'chargingFee': chargingFee,
+                    'totalAmount': parkingFee + chargingFee})
 
 @app.route('/getAmount/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
 def getAmountVehicle(vehicleNumber):
@@ -86,18 +95,26 @@ def getAmountVehicle(vehicleNumber):
             for connect, disconnect in connection:
                 # sending a message if the vehicle is still connected to the charging panel
                 if disconnect is None:
-                    return jsonify({'Ticket number': ticket.ticketNumber,
-                                    'Parking fee': parkingFee, 
-                                    'Charging fee': "Your electric car is connected to charging panel"})
+                   return jsonify({'ticketNumber': ticket.ticketNumber,
+                                    'vehicleNumber': vehicleNumber,
+                                    'totalParkingHours': timeDurationHours,
+                                    'totalChargingHours': chargingHours, 
+                                    'parkingFee': parkingFee, 
+                                    'chargingFee': "Your electric car is connected to charging panel",
+                                    'totalAmount': parkingFee + chargingFee})
                 # calculating total hours of charging
                 chargingHours += math.ceil((disconnect - connect).total_seconds() / 3600)
         # getting charging rate set by admin
         chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
         # calculating total charging fee till check time
         chargingFee = chargingRate * chargingHours
-    return jsonify({'Ticket number': ticket.ticketNumber,
-                    'Parking fee': parkingFee, 
-                    'Charging fee': chargingFee})
+     return jsonify({'ticketNumber': ticket.ticketNumber,
+                    'vehicleNumber': vehicleNumber,
+                    'totalParkingHours': timeDurationHours,
+                    'totalChargingHours': chargingHours, 
+                    'parkingFee': parkingFee, 
+                    'chargingFee': chargingFee,
+                    'totalAmount': parkingFee + chargingFee})
 
 
 @app.route('/getFreeSpots/<int:parkingLotID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])
@@ -144,7 +161,8 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                     parkingAttendantID = None,
                     inTime = inTime,
                     outTime = None,
-                    chargingFees = None)
+                    chargingFees = None,
+                    isPaid = False)
     db.session.add(ticket)
     # add vehicle info
     vehicle = Vehicle(vehicleNumber = customerObj.vehicleNumber,
@@ -176,3 +194,24 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                               }
                     }
                    )
+@app.route('/isPaid/vehcileNumber/<string:vehicleNumber>', methods=['GET'])
+def isPaid(vehicleNumber):
+    # getting vehicle object for given vehicle number
+    vehicle = Vehicle.query.filter_by(vehicleNumber = vehicleNumber)  
+    # getting ticket object for given ticket number
+    ticket = Ticket.query.filter_by(ticketNumber = vehicle.ticketNumber)
+    return jsonify({'status': 200, 'isPaid': ticket.isPaid})
+
+@app.route('/pay', methods=['POST'])
+def checkOutTicket():
+    requestBody = request.json
+    ticketNumber = requestBody['ticketNumber']
+    amount = requestBody['amount']
+    mode = requestBody['mode']
+    # getting ticket object for given ticket number
+    ticket = Ticket.query.filter_by(ticketNumber = ticketNumber)
+    if ticket.isPaid == True:
+        return jsonify({'status': 200, 'isPaid': ticket.isPaid})
+    # updating paid status of ticket
+    ticket.isPaid = True
+    return jsonify({'status': 200, 'isPaid': ticket.isPaid})

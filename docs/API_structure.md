@@ -51,9 +51,14 @@ Request Body:
                 {}
 Response Body:
                 {
-                    status:
-                    customerVehicleNumber:
-                    isPaid:
+                    ticketNumber:
+                    vehicleNumber:
+                    totalParkingHours:
+                    totalChargingHours:
+                    parkingFee: 
+                    chargingFee:
+                    totalAmount:
+
                 }
 </pre>
 ### GET /amountToPay/{ticketNo}
@@ -67,14 +72,13 @@ Response Body:
                     amount:
                 }
 </pre>
-### GET /pay
+### POST /pay
 <pre>
 Request Body:
                 {
-                    ticketNo:
+                    ticketNumber:
                     amount:
                     mode:
-                    boothId:
                 }
 Response Body:
                 {
