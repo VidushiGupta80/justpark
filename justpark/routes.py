@@ -41,7 +41,7 @@ def getAmountTicket(ticketNumber):
     # calculating charging fee if the vehicle type is electric car
     if vehicleType == 'Electric Car':
         # checking all the connections made with charging panel
-        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(LastConnection.ticketNumber == ticketNumber).all()
+        connections = LastConnection.query(LastConnection.connect, LastConnection.disconnect).filter_by(ticketNumber = ticketNumber).all()
         if connections is not None:
             for connect, disconnect in connection:
                 # if the vehicle is still charging, giving a message that charging fee cant be calculated
@@ -161,7 +161,6 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                     parkingAttendantID = None,
                     inTime = inTime,
                     outTime = None,
-                    chargingFees = None,
                     isPaid = False)
     db.session.add(ticket)
     # add vehicle info
@@ -194,12 +193,13 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                               }
                     }
                    )
+
 @app.route('/isPaid/vehcileNumber/<string:vehicleNumber>', methods=['GET'])
 def isPaid(vehicleNumber):
     # getting vehicle object for given vehicle number
-    vehicle = Vehicle.query.filter_by(vehicleNumber = vehicleNumber)  
+    vehicle = Vehicle.query.get(vehicleNumber)  
     # getting ticket object for given ticket number
-    ticket = Ticket.query.filter_by(ticketNumber = vehicle.ticketNumber)
+    ticket = Ticket.query.get(vehicle.ticketNumber)
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
 @app.route('/pay', methods=['POST'])
@@ -209,9 +209,17 @@ def checkOutTicket():
     amount = requestBody['amount']
     mode = requestBody['mode']
     # getting ticket object for given ticket number
-    ticket = Ticket.query.filter_by(ticketNumber = ticketNumber)
+    ticket = Ticket.query.get(ticketNumber)
     if ticket.isPaid == True:
         return jsonify({'status': 200, 'isPaid': ticket.isPaid})
     # updating paid status of ticket
     ticket.isPaid = True
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
+
+@app.route('/exit/customer/<string:ticketNumber>/<int:parkingAttendantID>', methods = ['POST'])
+def exitCustomer(ticketNumber, parkingAttendantID):
+    outTime = datetime.datetime.utcnow()
+    ticket = Ticket.query.get(ticketNumber)
+    ticket.outTime = outTime
+    ticket.parkingAttendantID = parkingAttendantID
+    
