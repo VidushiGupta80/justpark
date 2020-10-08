@@ -10,11 +10,6 @@ import datetime
 import json
 import math
 
-@app.route('/isPaid/ticketNumber/<string:ticketNumber>', methods=['GET'])
-def isPaid(ticketNumber):
-    # getting ticket object for given ticket number
-    ticket = Ticket.query.filter_by(ticketNumber = ticketNumber)
-    return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
 @app.route('/getAmount/ticketNumber/<string:ticketNumber>', methods=['GET'])
 def getAmountTicket(ticketNumber):
@@ -108,7 +103,7 @@ def getAmountVehicle(vehicleNumber):
         chargingRate = ChargingRate.query.filter_by(ChargingRate.vehicleType == vehicleType).one()
         # calculating total charging fee till check time
         chargingFee = chargingRate * chargingHours
-     return jsonify({'ticketNumber': ticket.ticketNumber,
+    return jsonify({'ticketNumber': ticket.ticketNumber,
                     'vehicleNumber': vehicleNumber,
                     'totalParkingHours': timeDurationHours,
                     'totalChargingHours': chargingHours, 
@@ -194,12 +189,12 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                               }
                     }
                    )
-@app.route('/isPaid/vehcileNumber/<string:vehicleNumber>', methods=['GET'])
+@app.route('/isPaid/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
 def isPaid(vehicleNumber):
     # getting vehicle object for given vehicle number
-    vehicle = Vehicle.query.filter_by(vehicleNumber = vehicleNumber)  
+    vehicle = Vehicle.query.filter_by(vehicleNumber = vehicleNumber).first()
     # getting ticket object for given ticket number
-    ticket = Ticket.query.filter_by(ticketNumber = vehicle.ticketNumber)
+    ticket = Ticket.query.filter_by(ticketNumber = vehicle.ticketNumber).first()
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
 @app.route('/pay', methods=['POST'])
@@ -209,9 +204,10 @@ def checkOutTicket():
     amount = requestBody['amount']
     mode = requestBody['mode']
     # getting ticket object for given ticket number
-    ticket = Ticket.query.filter_by(ticketNumber = ticketNumber)
+    ticket = Ticket.query.filter_by(ticketNumber = ticketNumber).first()
     if ticket.isPaid == True:
         return jsonify({'status': 200, 'isPaid': ticket.isPaid})
     # updating paid status of ticket
     ticket.isPaid = True
+    db.session.commit()
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
