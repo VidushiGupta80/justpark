@@ -180,7 +180,9 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                         floorNumber = floorNumber)
     db.session.add(logger)
     # updating entry point vehicle count
-    entryPoint = EntryPoint.query.filtery_by(and_(id = entryNumber, floorNumber = floorNumber, parkingLotID = parkingLotID)).first()
+    entryPoint = EntryPoint.query.filter(and_(EntryPoint.id == entryNumber,
+                                                 EntryPoint.floorNumber == floorNumber,
+                                                 EntryPoint.parkingLotID == parkingLotID)).first()
     entryPoint.vehicleCount += 1
     db.session.commit()
     return jsonify({'status': 200,
@@ -192,6 +194,7 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                               }
                     }
                    )
+
 @app.route('/isPaid/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
 def isPaidThroughVehicleNumber(vehicleNumber):
     vehicle = Vehicle.query.filter_by(vehicleNumber = vehicleNumber).first()
@@ -225,28 +228,32 @@ def exitCustomer(ticketNumber):
     ticket = Ticket.query.get(ticketNumber)
     if ticket is None:
         raise DatabaseException("Invalid ticket")
+    if ticket.outTime is not None:
+        return jsonify({'status': 200, 'message': 'Vehicle already exited.'})
     # updating ticket
     ticket.outTime = outTime
     ticket.parkingAttendantID = requestBody['parkingAttendantID']
     # updating exit point vehicle count
-    exitPoint = ExitPoint.query.filter_by(and_(id = requestBody['exitNumber'], floorNumber = requestBody['floorNumber']. parkingLotID = requestBody['parkingLotID'])).first()
+    exitPoint = ExitPoint.query.filter(and_(ExitPoint.id == requestBody['exitNumber'],
+                                            ExitPoint.floorNumber == requestBody['floorNumber'],
+                                            ExitPoint.parkingLotID == requestBody['parkingLotID'])).first()
     exitPoint.vehicleCount += 1
     # updating free spots
     spotID = ticket.spotID
     vehicle = Vehicle.query.filter_by(ticketNumber = ticketNumber).first()
-    parkingSpot = ParkingSpot.query.filter_by(and_(spotID = spotID, parkingLotID = requestBody['parkingLotID'], floorNumber = requestBody['floorNumber'], spotType = vehicle.vehicleType)).first()
+    parkingSpot = ParkingSpot.query.filter(and_(ParkingSpot.spotID == spotID,
+                                                ParkingSpot.parkingLotID == requestBody['parkingLotID'],
+                                                ParkingSpot.floorNumber == requestBody['floorNumber'],
+                                                ParkingSpot.spotType == vehicle.vehicleType)).first()
     parkingSpot.status = False
     # updating vehicle log
-    logger = VehicleLog.query.filter_by(and_(vehicleNumber = vehicle.vehicleNumber, inTime = ticket.inTime)).first()
-    logger.exitPoint = exitNumber
+    logger = VehicleLog.query.filter(and_(VehicleLog.vehicleNumber == vehicle.vehicleNumber,
+                                          VehicleLog.inTime == ticket.inTime)).first()
+    logger.exitPoint = requestBody['exitNumber']
     logger.outTime = outTime
     logger.parkingAttendantID = requestBody['parkingLotID']
     if ticket.isPaid == False:
-        raise DatabaseException("The ticket is not paid")
+        return jsonify({'status': 200, 'message': "Please pay the bill before exiting"})
     else:
         db.session.commit()
-        return jsonify({'status': 200})
-
-
-
-    
+        return jsonify({'status': 200, 'message': 'Thank you for letting us be of service.'})

@@ -11,5 +11,5 @@ class VehicleLog(db.Model):
     spotID = db.Column(db.Integer, nullable = False)
     parkingLotID = db.Column(db.Integer, nullable = False)
     floorNumber = db.Column(db.Integer, nullable = False)
-    parkingAttendantID = db.Column(dn.Integer, nullable = True)
+    parkingAttendantID = db.Column(db.Integer, nullable = True)
     
