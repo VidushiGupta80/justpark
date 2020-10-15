@@ -4,35 +4,40 @@
 * Details important to take the action will be in the body of the APIs
 * Make changes to APIs on the fly if needed according to designed LLD and ER diagrams
 
-### GET /entryOptions/{floorNo}/{entryNo}
+### GET /getFreeSlots/{parkingLotID}/{floorNumber}/{vehicleType}
 <pre>
 Request Body:
                 {}
 Response Body:
                 {
-                    'Enter customer and car details': '/enter/{floorNo}/{entryNo}'
-                    'Get available slots': '/freeSlots/{floorNo}'
+                    spotID: 
+                    status: 
+                    rowNumber:
+                    columnNumber:
                 }
 </pre>
 
-### POST /enter/{floorNo}/{entryNo}
+### POST /enter/customer/{parkingLotID}/{floorNumber}/{entryNoumber}/{spotID}
 <pre>
 Request Body:
                 {
                     customerName:
                     customerVehicleType:
                     customerVehicleNumber:
-                    customerAddress:
                     cutomerMobileNo:
                 }
 Response Body:
                 {
-                    status:
-                    ticketNo:
-                    isBlacklisted:
+                    status: 
+                    ticket': {
+                                ticketNumber:
+                                customerId:
+                                vehicleNumber: 
+                                inTime:
+                              }
                 }
 </pre>
-### POST /exit/{floorNo}/{exitNo}
+### POST /exit/customer/{ticketNumber}
 <pre>
 Request Body:
                 {
@@ -44,10 +49,30 @@ Request Body:
 Response Body:
                 {
                     status:
+                    message:
+                }
+</pre>
+### GET /isPaid/ticketNumber/{ticketNumber}
+<pre>
+Request Body:
+                {}
+Response Body:
+                {
+                    status:
                     isPaid:
                 }
 </pre>
-### GET /isPaid/{ticketNo}
+### GET /isPaid/vehicleNumber/{vehicleNumber}
+<pre>
+Request Body:
+                {}
+Response Body:
+                {
+                    status:
+                    isPaid:
+                }
+</pre>
+### GET /getAmount/ticketNumber/{ticketNumber}
 <pre>
 Request Body:
                 {}
@@ -56,22 +81,27 @@ Response Body:
                     ticketNumber:
                     vehicleNumber:
                     totalParkingHours:
-                    totalChargingHours:
+                    totalChargingHours: 
                     parkingFee: 
-                    chargingFee:
+                    chargingFee: 
                     totalAmount:
 
                 }
 </pre>
-### GET /amountToPay/{ticketNo}
+### GET /getAmount/vehicleNumber/{vehicleNumber}
 <pre>
 Request Body:
                 {}
 Response Body:
                 {
-                    status:
-                    customerVehicleNumber:
-                    amount:
+                    ticketNumber:
+                    vehicleNumber:
+                    totalParkingHours:
+                    totalChargingHours: 
+                    parkingFee: 
+                    chargingFee: 
+                    totalAmount:
+
                 }
 </pre>
 ### POST /pay
@@ -102,7 +132,7 @@ Response Body:
                     displayMessage:
                 }
 </pre>
-### GET /slotsAvailable/{floorNo}
+<!-- ### GET /slotsAvailable/{floorNo}
 <pre>
 Request Body:
                 {}
@@ -111,8 +141,8 @@ Response Body:
                     status:
                     slotsAvailable:
                 }
-</pre>
-### POST /bookSlot/{floorNo}/{slotNo}
+</pre> -->
+<!-- ### POST /bookSlot/{floorNo}/{slotNo}
 <pre>
 Request Body:
                 {}
@@ -121,8 +151,8 @@ Response Body:
                     status:
                     isBooked:
                 }
-</pre>
-### POST /freeSlot/{floorNo}/{slotNo}
+</pre> -->
+<!-- ### POST /freeSlot/{floorNo}/{slotNo}
 <pre>
 Request Body:
                 {}
@@ -131,9 +161,9 @@ Response Body:
                     status:
                     isFreed:
                 }
-</pre>
+</pre> -->
 
-### GET /orientation/{floorNo}
+<!-- ### GET /orientation/{floorNo}
 <pre>
 Request Body:
                 {}
@@ -151,30 +181,29 @@ Response Body:
                         }
                     ]
                 }
-</pre>
+</pre> -->
 
 ### POST /electricUseStart/{ticketNo}
 <pre>
 Request Body:
-                {
-                    timestampStart:
+                {                  
                 }
 Response Body:
                 {
                     status:
-                    isMarked:
+                    message:
                 }
 </pre>
 ### POST /electricUseStop/{ticketNo}
 <pre>
 Request Body:
-                {
-                    timestampStop:
+                {                   
                 }
 Response Body:
                 {
                     status:
-                    isMarked:
+                    message:
+                    duration:
                 }
 </pre>
 

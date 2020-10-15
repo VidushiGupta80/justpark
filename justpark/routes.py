@@ -139,11 +139,6 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                            firstName = request_body['firstName'],
                            middleName = request_body['middleName'] if 'middleName' in request_body.keys() else "",
                            lastName = request_body['lastName'],
-                           address = request_body['address'],
-                           city = request_body['city'],
-                           state = request_body['state'],
-                           country = request_body['country'],
-                           pincode = request_body['pincode'],
                            contactNumber = request_body['contactNumber'],
                            vehicleNumber = request_body['vehicleNumber'],
                            vehicleType = request_body['vehicleType'],
@@ -257,3 +252,43 @@ def exitCustomer(ticketNumber):
     else:
         db.session.commit()
         return jsonify({'status': 200, 'message': 'Thank you for letting us be of service.'})
+
+@app.route('/electricUseStart/<string:ticketNumber>', methods = ['POST'])
+def startCharging(ticketNumber):
+    connectTime = datetime.datetime.utcnow()
+    ticket = Ticket.query.get(ticketNumber)
+    logger = VehicleLog.query.filter(and_(VehicleLog.vehicleNumber == ticket.vehicleNumber,
+                                          VehicleLog.inTime == ticket.inTime)).first()
+    # create an entry in last connection table
+    connection = LastConnection(floorNumber = logger.floorNumber,
+                                parkingLotID = logger.parkingLotID,
+                                spotID = logger.spotID,
+                                connect = connectTime,      
+                                ticketNumber = ticketNumber)
+    db.session.add(connection)
+    # charging panel add
+    panel = ChargingPanel(spotID = logger.spotID,
+                          floorNumber = logger.floorNumber,
+                          parkingLotID = logger.parkingLotID,
+                          lastConnectionID = connection.id,
+                          ticketNumber = ticketNumber,
+                          vehicleNumber = ticket.vehicleNumber)
+    db.session.add(panel)
+    db.session.commit()
+    return jsonify({'status': 200, 'message': 'Your vehicle is now charging'})
+
+@app.route('electricUseStop/<string:ticketNumber>', methods = ['POST'])
+def stopCharging(ticketNumber):
+    disconnectTime = datetime.datetime.utcnow()
+    connection = LastConnection.query.filter(and_(LastConnection.ticketNumber == ticketNumber,
+                                                  LastConnection.disconnect == None)).first()
+    connection.disconnect = disconnectTime
+    # calculating duration of charging in hours
+    duration = math.ceil((disconnectTime - connection.connect).total_seconds()/3600)
+    db.session.commit()
+    return jsonify({'status': 200, 
+                    'message': 'Your vehicle is now disconnected',
+                    'duration': duration})
+
+
+

@@ -35,21 +35,16 @@ class Customer(db.Model):
     ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)   
     firstName = db.Column(db.String, nullable = False)
     middleName = db.Column(db.String, nullable = True)
-    lastName = db.Column(db.String, nullable = False)
-    address = db.Column(db.String, nullable = False)
-    city = db.Column(db.String, nullable = False)
-    state  = db.Column(db.String, nullable = False)
-    country = db.Column(db.String, nullable = False)
-    pincode = db.Column(db.Integer, nullable = False)
+    lastName = db.Column(db.String, nullable = False)   
     contactNumber = db.Column(db.Integer, nullable = False)
 
     def __repr__(self):
         idLine = "Customer ID: %s" % (self.customerID)
         nameLine = "First Name: %s, Middle Name: %s, Last Name: %s" % (self.firstName, self.middleName, self.lastName)
-        address = "Address: %s, City: %s, State: %s, Country: %s, Pincode: %s" % (self.address, self.city, self.state, self.country, self.pincode)
+
         contactNumber = "Contact Number: %s" % (self.contactNumber)
         vehicleInfo = "Vehicle Number: %s, Vehicle Type: %s, ticketNumber: %s" % (self.vehicleNumber, self.vehicleType, self.ticketNumber)
-        return '\n'.join([idLine, nameLine, address, contactNumber, vehicleInfo])
+        return '\n'.join([idLine, nameLine, contactNumber, vehicleInfo])
 
 class Admin(db.Model):
     __tablename__ = "admin"
@@ -119,7 +114,7 @@ class Ticket(db.Model):
     outTime = db.Column(db.DateTime, nullable = True)
     isPaid = db.Column(db.Boolean, nullable = False)
     spotID = db.Column(db.Integer, db.ForeignKey("parkingSpot.spotID"), nullable = False)
-
+    
     def _repr__(self):
         return "inTime: %s" % self.inTime
 
