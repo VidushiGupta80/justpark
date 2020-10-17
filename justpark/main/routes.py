@@ -1,4 +1,5 @@
-from justpark import app, db
+from flask import Blueprint
+from justpark import app, db, bcrypt
 from time import time
 from flask import jsonify, request
 from sqlalchemy import and_
@@ -9,9 +10,11 @@ from justpark.exceptions import DatabaseException
 import datetime
 import json
 import math
+from app.libs.flask_login_multi import login_user, current_user, logout_user, login_required
 
+main = Blueprint("main", __name__)
 
-@app.route('/getAmount/ticketNumber/<string:ticketNumber>', methods=['GET'])
+@main.route('/getAmount/ticketNumber/<string:ticketNumber>', methods=['GET'])
 def getAmountTicket(ticketNumber):
     ticket = Ticket.query.get(ticketNumber)
     print(ticket)
@@ -62,7 +65,7 @@ def getAmountTicket(ticketNumber):
                     'chargingFee': chargingFee,
                     'totalAmount': parkingFee + chargingFee})
 
-@app.route('/getAmount/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
+@main.route('/getAmount/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
 def getAmountVehicle(vehicleNumber):
     # getting vehicle object for the gien vehicle number
     vehicleInfo = Vehicle.query.get(vehicleNumber)
@@ -112,7 +115,7 @@ def getAmountVehicle(vehicleNumber):
                     'totalAmount': parkingFee + chargingFee})
 
 
-@app.route('/getFreeSpots/<int:parkingLotID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])
+@main.route('/getFreeSpots/<int:parkingLotID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])
 def getFreeSpots(parkingLotID, floorNumber, vehicleType):
     # getting all designed parkingspots of the given vehicle type for given floor number and parking ID
     allSpots = ParkingSpot.query.filter(and_(ParkingSpot.parkingLotID == parkingLotID, ParkingSpot.floorNumber == floorNumber, ParkingSpot.spotType == vehicleType)).all()
@@ -128,7 +131,7 @@ def getFreeSpots(parkingLotID, floorNumber, vehicleType):
         spotsAsDict.append(spotDict)
     return json.dumps(spotsAsDict)
 
-@app.route('/enter/customer/<int:parkingLotID>/<int:floorNumber>/<int:entryNumber>/<int:spotID>', methods=['POST'])
+@main.route('/enter/customer/<int:parkingLotID>/<int:floorNumber>/<int:entryNumber>/<int:spotID>', methods=['POST'])
 def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
     request_body = request.json
     ticketNumber = generateTicketNumber()
@@ -190,18 +193,18 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                     }
                    )
 
-@app.route('/isPaid/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
+@main.route('/isPaid/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
 def isPaidThroughVehicleNumber(vehicleNumber):
     vehicle = Vehicle.query.filter_by(vehicleNumber = vehicleNumber).first()
     ticket = Ticket.query.filter_by(ticketNumber = vehicle.ticketNumber).first()
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
-@app.route('/isPaid/ticketNumber/<string:ticketNumber>', methods=['GET'])
+@main.route('/isPaid/ticketNumber/<string:ticketNumber>', methods=['GET'])
 def isPaidThroughTicketNumber(ticketNumber):
     ticket = Ticket.query.filter_by(ticketNumber = ticketNumber).first()
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
-@app.route('/pay', methods=['POST'])
+@main.route('/pay', methods=['POST'])
 def checkOutTicket():
     requestBody = request.json
     ticketNumber = requestBody['ticketNumber']
@@ -216,44 +219,7 @@ def checkOutTicket():
     db.session.commit()
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
-@app.route('/exit/customer/<string:ticketNumber>', methods = ['POST'])
-def exitCustomer(ticketNumber):
-    requestBody = request.json
-    outTime = datetime.datetime.utcnow()
-    ticket = Ticket.query.get(ticketNumber)
-    if ticket is None:
-        raise DatabaseException("Invalid ticket")
-    if ticket.outTime is not None:
-        return jsonify({'status': 200, 'message': 'Vehicle already exited.'})
-    # updating ticket
-    ticket.outTime = outTime
-    ticket.parkingAttendantID = requestBody['parkingAttendantID']
-    # updating exit point vehicle count
-    exitPoint = ExitPoint.query.filter(and_(ExitPoint.id == requestBody['exitNumber'],
-                                            ExitPoint.floorNumber == requestBody['floorNumber'],
-                                            ExitPoint.parkingLotID == requestBody['parkingLotID'])).first()
-    exitPoint.vehicleCount += 1
-    # updating free spots
-    spotID = ticket.spotID
-    vehicle = Vehicle.query.filter_by(ticketNumber = ticketNumber).first()
-    parkingSpot = ParkingSpot.query.filter(and_(ParkingSpot.spotID == spotID,
-                                                ParkingSpot.parkingLotID == requestBody['parkingLotID'],
-                                                ParkingSpot.floorNumber == requestBody['floorNumber'],
-                                                ParkingSpot.spotType == vehicle.vehicleType)).first()
-    parkingSpot.status = False
-    # updating vehicle log
-    logger = VehicleLog.query.filter(and_(VehicleLog.vehicleNumber == vehicle.vehicleNumber,
-                                          VehicleLog.inTime == ticket.inTime)).first()
-    logger.exitPoint = requestBody['exitNumber']
-    logger.outTime = outTime
-    logger.parkingAttendantID = requestBody['parkingLotID']
-    if ticket.isPaid == False:
-        return jsonify({'status': 200, 'message': "Please pay the bill before exiting"})
-    else:
-        db.session.commit()
-        return jsonify({'status': 200, 'message': 'Thank you for letting us be of service.'})
-
-@app.route('/electricUseStart/<string:ticketNumber>', methods = ['POST'])
+@main.route('/electricUseStart/<string:ticketNumber>', methods = ['POST'])
 def startCharging(ticketNumber):
     connectTime = datetime.datetime.utcnow()
     ticket = Ticket.query.get(ticketNumber)
@@ -277,7 +243,7 @@ def startCharging(ticketNumber):
     db.session.commit()
     return jsonify({'status': 200, 'message': 'Your vehicle is now charging'})
 
-@app.route('electricUseStop/<string:ticketNumber>', methods = ['POST'])
+@main.route('/electricUseStop/<string:ticketNumber>', methods = ['POST'])
 def stopCharging(ticketNumber):
     disconnectTime = datetime.datetime.utcnow()
     connection = LastConnection.query.filter(and_(LastConnection.ticketNumber == ticketNumber,
@@ -289,6 +255,3 @@ def stopCharging(ticketNumber):
     return jsonify({'status': 200, 
                     'message': 'Your vehicle is now disconnected',
                     'duration': duration})
-
-
-

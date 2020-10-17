@@ -1,4 +1,6 @@
-from justpark import db
+from justpark import db, login_manager
+from datetime import datetime
+from flask_login import UserMixim
 
 class ParkingLot(db.Model):
     __tablename__ = "parkingLot"
@@ -46,9 +48,16 @@ class Customer(db.Model):
         vehicleInfo = "Vehicle Number: %s, Vehicle Type: %s, ticketNumber: %s" % (self.vehicleNumber, self.vehicleType, self.ticketNumber)
         return '\n'.join([idLine, nameLine, contactNumber, vehicleInfo])
 
-class Admin(db.Model):
+@login_manager.user_loader
+def load_user(id, endpoint='parkingAttendant'):
+    if endpoint == 'admin':
+        return Admin.query.get(id)
+    else:
+        return ParkingAttendant.query.get(id)
+
+class Admin(db.Model, UserMixim):
     __tablename__ = "admin"
-    adminID = db.Column(db.Integer, autoincrement = True, primary_key = True)
+    adminID = db.Column(db.String, primary_key = True)
     password = db.Column(db.String, nullable = False)
     emailID = db.Column(db.String, nullable = False)
     salary = db.Column(db.Integer, nullable = False)
@@ -71,9 +80,10 @@ class Admin(db.Model):
         adminInfo = "Password: password thodi dikha denge :), emailId: %s, salary: %s" % (self.emailID, self.salary)
         return '\n'.join([idLine, nameLine, address, contactNumber, adminInfo])
 
-class ParkingAttendant(db.Model):
+class ParkingAttendant(db.Model, UserMixim):
     __tablename__ = "parkingAttendant"
-    parkingAttendantId = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    parkingAttendantID = db.Column(db.String, primary_key=True)
+    password = db.Column(db.String, nullable = False)
     joiningDate = db.Column(db.DateTime, nullable = False)
     leavingDate = db.Column(db.DateTime, nullable = True)
     floor = db.Column(db.Integer, nullable = False)
@@ -129,7 +139,7 @@ class ChargingPanel(db.Model):
 
 class LastConnection(db.Model):
     __tablename__ = "lastConnection"
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, autoincrement = True, primary_key = True)
     floorNumber = db.Column(db.Integer, primary_key = True)
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
     spotID = db.Column(db.Integer, db.ForeignKey("chargingPanel.spotID"), primary_key = True)
