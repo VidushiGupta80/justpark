@@ -29,16 +29,16 @@ class EntryPoint(db.Model):
     displayID = db.Column(db.Integer, db.ForeignKey("displayBoard.id"), nullable = False)    
     parkingLotID = db.Column(db.Integer, db.ForeignKey("parkingLot.id"), primary_key = True)
 
-class Customer(db.Model):
+class Customer(db.Model, UserMixim):
     __tablename__ = "customer"
     customerID = db.Column(db.String, primary_key = True)
-    vehicleNumber = db.Column(db.String, db.ForeignKey("vehicle.vehicleNumber"), nullable = False)
-    vehicleType = db.Column(db.String, nullable = False)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)   
+    vehicleID = db.Column(db.String, db.ForeignKey("vehicle.vehicleID"), nullable = False)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = True)   
     firstName = db.Column(db.String, nullable = False)
     middleName = db.Column(db.String, nullable = True)
     lastName = db.Column(db.String, nullable = False)   
     contactNumber = db.Column(db.Integer, nullable = False)
+    password = db.Column(db.String, nullable = True)
 
     def __repr__(self):
         idLine = "Customer ID: %s" % (self.customerID)
@@ -52,6 +52,8 @@ class Customer(db.Model):
 def load_user(id, endpoint='parkingAttendant'):
     if endpoint == 'admin':
         return Admin.query.get(id)
+    elif endpoint == 'main':
+        return Customer.query.get(id)
     else:
         return ParkingAttendant.query.get(id)
 
@@ -109,8 +111,9 @@ class ParkingAttendant(db.Model, UserMixim):
 
 class Vehicle(db.Model):
     __tablename__ = "vehicle"
+    vehicleID = db.Column(db.String, primary_key = True)
     vehicleNumber = db.Column(db.String, primary_key = True)
-    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), nullable = False)
+    ticketNumber = db.Column(db.String, db.ForeignKey("ticket.ticketNumber"), primary_key = True, nullable = False)
     customerID = db.Column(db.Integer, db.ForeignKey("customer.customerID"), nullable = False)
     vehicleType = db.Column(db.String, nullable = False)
 

@@ -66,7 +66,7 @@ def loginAdmin():
                         'message': 'Login unsuccessful. Please try again'})
 
 @admin.route('/logout')
-def logout():
+def logoutAdmin():
     logout_user()
     return jsonify({'status': 200,
                     'message': 'You have succesfully logged out'})

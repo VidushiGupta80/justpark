@@ -2,10 +2,10 @@ from flask import Blueprint
 from justpark import app, db, bcrypt
 from time import time
 from flask import jsonify, request
-from sqlalchemy import and_
+from sqlalchemy import and_, desc
 from justpark.models import *
 from justpark.log import VehicleLog
-from justpark.utils import generateTicketNumber, generateCustomerId
+from justpark.utils import generateTicketNumber, generateCustomerID, generateVehicleID
 from justpark.exceptions import DatabaseException
 import datetime
 import json
@@ -28,7 +28,7 @@ def getAmountTicket(ticketNumber):
     # get vehicle number for vehicle details
     vehicleNumber = ticket.vehicleNumber
     # object of vehicle of customer
-    vehicleInfo = Vehicle.query.get(vehicleNumber)
+    vehicleInfo = Vehicle.query.filter(and_(Vehicle.vehicleNumber == vehicleNumber and Vehicle.ticketNumber == ticketNumber)).first()
     vehicleType = vehicleInfo.vehicleType
     # parking fee rate set by admin for this particluar vehicle type
     rate = Rate.query.get(vehicleType)      
@@ -68,17 +68,15 @@ def getAmountTicket(ticketNumber):
 @main.route('/getAmount/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
 def getAmountVehicle(vehicleNumber):
     # getting vehicle object for the gien vehicle number
-    vehicleInfo = Vehicle.query.get(vehicleNumber)
-    if vehicleInfo is None:
+    ticket = Ticket.query.filter(and_(Ticket.vehicleNumber == vehicleNumber and Ticket.outTime == None).first()
+    if ticket is None:
         raise DatabaseException("This vehicle is not inside this parking lot")
-    # getting ticket object for the given vehicle number
-    ticket = Ticket.query.filter_by(vehicleNumber = vehicleNumber).first()
     # time of checking the amount of ticket
     checkTime = datetime.datetime.utcnow()
     timeDuration = checkTime - ticket.inTime
     # converting total time duration in hours from seconds
     timeDurationHours = math.ceil(timeDuration.total_seconds() / 3600)
-    vehicleType = vehicleInfo.vehicleType
+    vehicleType = ticket.vehicleType
     # getting parking rate set by admin of the vehicle type 
     rate = Rate.query.get(vehicleType) 
     # calculting total parking fee till check time  
@@ -131,26 +129,26 @@ def getFreeSpots(parkingLotID, floorNumber, vehicleType):
         spotsAsDict.append(spotDict)
     return json.dumps(spotsAsDict)
 
-@main.route('/enter/customer/<int:parkingLotID>/<int:floorNumber>/<int:entryNumber>/<int:spotID>', methods=['POST'])
-def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
+@main.route('/enter/customer/guest/<int:parkingLotID>/<int:floorNumber>/<int:entryNumber>/<int:spotID>', methods=['POST'])
+def makeCustomerEntryAsGuest(parkingLotID, spotID, floorNumber, entryNumber):
     request_body = request.json
     ticketNumber = generateTicketNumber()
     inTime = datetime.datetime.utcnow()
-    customerID = generateCustomerId()
+    customerID = generateCustomerID()
+    vehcileID = generateVehicleID()
     # add customer info
     customerObj = Customer(customerID = customerID,
+                           vehicleID = vehicleID,
                            firstName = request_body['firstName'],
                            middleName = request_body['middleName'] if 'middleName' in request_body.keys() else "",
                            lastName = request_body['lastName'],
                            contactNumber = request_body['contactNumber'],
-                           vehicleNumber = request_body['vehicleNumber'],
-                           vehicleType = request_body['vehicleType'],
                            ticketNumber = ticketNumber)
     db.session.add(customerObj)
     # add ticket info
     ticket = Ticket(ticketNumber = ticketNumber,
-                    customerID = customerObj.customerID,
-                    vehicleNumber = customerObj.vehicleNumber,
+                    customerID = customerID,
+                    vehicleNumber = request_body['vehicleNumber'],
                     parkingAttendantID = None,
                     inTime = inTime,
                     outTime = None,
@@ -158,9 +156,10 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                     spotID = spotID)
     db.session.add(ticket)
     # add vehicle info
-    vehicle = Vehicle(vehicleNumber = customerObj.vehicleNumber,
+    vehicle = Vehicle(vehicleID = vehicleID,
+                      vehicleNumber = request_body['vehicleNumber'],
                       ticketNumber = ticketNumber,
-                      customerID = customerObj.customerID,
+                      customerID = customerID,
                       vehicleType =  request_body['vehicleType'])
     db.session.add(vehicle)
     # update free spot
@@ -169,7 +168,7 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
                                               ParkingSpot.floorNumber == floorNumber,
                                               ParkingSpot.spotType == request_body['vehicleType'])).update({'status': True})
     # add vehicle info in log table
-    logger = VehicleLog(vehicleNumber = customerObj.vehicleNumber,
+    logger = VehicleLog(vehicleNumber = request_body['vehicleNumber'],
                         inTime = inTime,
                         entryPoint = entryNumber,
                         vehicleType = request_body['vehicleType'],
@@ -185,9 +184,9 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
     db.session.commit()
     return jsonify({'status': 200,
                     'ticket': {
-                                'ticketNumber': ticket.ticketNumber,
-                                'customerId': ticket.customerID,
-                                'vehicleNumber': ticket.vehicleNumber,
+                                'ticketNumber': ticketNumber,
+                                'customerId': customerID,
+                                'vehicleNumber': request_body['vehicleNumber'],
                                 'inTime': inTime
                               }
                     }
@@ -195,8 +194,7 @@ def makeCustomerEntry(parkingLotID, spotID, floorNumber, entryNumber):
 
 @main.route('/isPaid/vehicleNumber/<string:vehicleNumber>', methods=['GET'])
 def isPaidThroughVehicleNumber(vehicleNumber):
-    vehicle = Vehicle.query.filter_by(vehicleNumber = vehicleNumber).first()
-    ticket = Ticket.query.filter_by(ticketNumber = vehicle.ticketNumber).first()
+    ticket = Ticket.query.filter(Ticket.vehicleNumber == vehicleNumber).order_by(Ticket.inTime.desc()).first()
     return jsonify({'status': 200, 'isPaid': ticket.isPaid})
 
 @main.route('/isPaid/ticketNumber/<string:ticketNumber>', methods=['GET'])
@@ -255,3 +253,110 @@ def stopCharging(ticketNumber):
     return jsonify({'status': 200, 
                     'message': 'Your vehicle is now disconnected',
                     'duration': duration})
+
+@main.route('/register', methods = ['GET', 'POST'])
+def registerCustomer():
+    if current_user.is_authenticated:
+        return jsonify({'message': 'Already logged in'})
+    requestBody = request.json
+    # check for exisiting contact number 
+    customer = Customer.query.filter(and_(Customer.contactNumber == requestBody['contactNumber'], Customer.password is not None)).first()    
+    if customer:
+        raise DatabaseException('Account already exists. Please login')
+    # hashing password
+    hashedPassword = bcrypt.generate_password_hash(requestBody['password']).decode('utf-8')
+    customerID = generateCustomerID()
+    vehicleID = generateVehicleID()
+    customer = Customer(customerID = customerID,
+                        vehicleID = vehicleID,
+                        password = hashedPassword,                     
+                        firstName = requestBody['firstName'],
+                        middleName = requestBody['middleName'],
+                        lastName = requestBody['lastName'],                  
+                        contactNumber = requestBody['ContactNumber'])
+    db.session.add(customer)
+    db.session.commit()
+    return jsonify({'status' : 200,
+                    'customerID': customerID,
+                    'vehicleID': vehicleID,
+                    'message': 'You have been successfully registered as customer'})
+
+@main.route('/login', methods = ['GET', 'POST'])
+def loginCustomer():
+    if current_user.is_authenticated:
+        return jsonify({'message': 'Already logged in'})
+    requestBody = request.json
+    customer = Customer.query.filter(and_(Customer.contactNumber == requestBody['contactNumber'], Customer.password is not None)).first()
+    if customer and bcrypt.check_password_hash(admin.password, requestBody['password']):
+        login_user(customer)
+        return jsonify({'status': 200, 
+                        'message': 'Login successful'})
+    else:
+        return jsonify({'status': ,
+                        'message': 'Login unsuccessful. Please try again'})
+
+@main.route('/logout')
+def logoutCustomer():
+    logout_user()
+    return jsonify({'status': 200,
+                    'message': 'You have succesfully logged out'})
+
+
+@main.route('/enter/customer/login/<int:parkingLotID>/<int:floorNumber>/<int:entryNumber>/<int:spotID>', methods=['POST'])
+@login_required
+def makeCustomerEntryAsLogin(parkingLotID, spotID, floorNumber, entryNumber):
+    if current_user.is_authenticated is False:
+        raise DatabaseException("Login required")
+    customerID = current_user.get_id()
+    request_body = request.json
+    ticketNumber = generateTicketNumber()
+    inTime = datetime.datetime.utcnow()
+    customer = Customer.query.get(customerID)
+    # add ticket number to customer object
+    customer.ticketNumber = ticketNumber
+    # add ticket info
+    ticket = Ticket(ticketNumber = ticketNumber,
+                    customerID = customerID,
+                    vehicleNumber = request_body['vehicleNumber'],
+                    parkingAttendantID = None,
+                    inTime = inTime,
+                    outTime = None,
+                    isPaid = False,
+                    spotID = spotID)
+    db.session.add(ticket)
+    # add vehicle info
+    vehicle = Vehicle(vehicleID = customer.vehicleID,
+                      vehicleNumber = request_body['vehicleNumber']
+                      ticketNumber = ticketNumber,
+                      customerID = customerID,
+                      vehicleType =  request_body['vehicleType'])
+    db.session.add(vehicle)
+    # update free spot
+    db.session.query(ParkingSpot).filter(and_(ParkingSpot.spotID == spotID,
+                                              ParkingSpot.parkingLotID == parkingLotID,
+                                              ParkingSpot.floorNumber == floorNumber,
+                                              ParkingSpot.spotType == request_body['vehicleType'])).update({'status': True})
+    # add vehicle info in log table
+    logger = VehicleLog(vehicleNumber = request_body['vehicleNumber'],
+                        inTime = inTime,
+                        entryPoint = entryNumber,
+                        vehicleType = request_body['vehicleType'],
+                        spotID = spotID,
+                        parkingLotID = parkingLotID,
+                        floorNumber = floorNumber)
+    db.session.add(logger)
+    # updating entry point vehicle count
+    entryPoint = EntryPoint.query.filter(and_(EntryPoint.id == entryNumber,
+                                                 EntryPoint.floorNumber == floorNumber,
+                                                 EntryPoint.parkingLotID == parkingLotID)).first()
+    entryPoint.vehicleCount += 1
+    db.session.commit()
+    return jsonify({'status': 200,
+                    'ticket': {
+                                'ticketNumber': ticketNumber,
+                                'customerId': customerID,
+                                'vehicleNumber': request_body['vehicleNumber'],
+                                'inTime': inTime
+                              }
+                    }
+                   )

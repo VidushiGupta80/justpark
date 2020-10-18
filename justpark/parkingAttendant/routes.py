@@ -107,9 +107,8 @@ def loginParkingAttendant():
         return jsonify({'status': ,
                         'message': 'Login unsuccessful. Please try again'})
 
-
 @parkingAttendant.route('/logout')
-def logout():
+def logoutParkingAttendant():
     logout_user()
     return jsonify({'status': 200,
                     'message': 'You have succesfully logged out'})

@@ -14,6 +14,7 @@ login_manager = LoginManager(app)
 login_manager.blueprint_login_views = {  
         'parkingAttendant':  "parkingAttendant.loginParkingAttendant",  
         'admin': "admin.loginAdmin",  
+        'main': "main.loginCustomer"
     }  
 from justpark.admin.routes import admin
 from justpark.main.routes import main
