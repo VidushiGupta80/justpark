@@ -16,6 +16,9 @@ parkingAttendant = Blueprint("parkingAttendant", __name__)
 @parkingAttendant.route('/exit/customer/<string:ticketNumber>', methods = ['POST'])
 @login_required
 def exitCustomer(ticketNumber):
+    if current_user.is_authenticated is False:
+        raise DatabaseException("Login required")
+    parkingAttendantID = current_user.get_id()
     requestBody = request.json
     outTime = datetime.datetime.utcnow()
     ticket = Ticket.query.get(ticketNumber)
@@ -23,9 +26,15 @@ def exitCustomer(ticketNumber):
         raise DatabaseException("Invalid ticket")
     if ticket.outTime is not None:
         return jsonify({'status': 200, 'message': 'Vehicle already exited.'})
+    # checking time limit of 15 mins to exit from parking lot
+    if ticket.isPaid and (outTime - ticket.checkTime).total_seconds() > 900:
+        ticket.isPaid = False
+        ticket.checkTime = None
+        db.session.commit()
+        raise DatabaseException('You have exceeded the time limit to exit the parking lot. Please pay again')
     # updating ticket
     ticket.outTime = outTime
-    ticket.parkingAttendantID = requestBody['parkingAttendantID']
+    ticket.parkingAttendantID = parkingAttendantID
     # updating exit point vehicle count
     exitPoint = ExitPoint.query.filter(and_(ExitPoint.id == requestBody['exitNumber'],
                                             ExitPoint.floorNumber == requestBody['floorNumber'],
@@ -44,12 +53,11 @@ def exitCustomer(ticketNumber):
                                           VehicleLog.inTime == ticket.inTime)).first()
     logger.exitPoint = requestBody['exitNumber']
     logger.outTime = outTime
-    logger.parkingAttendantID = requestBody['parkingLotID']
+    logger.parkingAttendantID = parkingLotID
     if ticket.isPaid == False:
-        return jsonify({'status': 200, 'message': "Please pay the bill before exiting"})
-    else:
-        db.session.commit()
-        return jsonify({'status': 200, 'message': 'Thank you for letting us be of service.'})
+        ticket.isPaid = True    
+    db.session.commit()
+    return jsonify({'status': 200, 'message': 'Thank you for letting us be of service.'})
 
 @parkingAttendant.route('/register', methods = ['GET', 'POST'])
 def registerParkingAttendant():

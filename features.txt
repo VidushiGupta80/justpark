@@ -1,2 +1,2 @@
-add pay option at exit for parking attendant
-create login for customer also
+
+

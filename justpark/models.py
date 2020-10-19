@@ -127,6 +127,8 @@ class Ticket(db.Model):
     outTime = db.Column(db.DateTime, nullable = True)
     isPaid = db.Column(db.Boolean, nullable = False)
     spotID = db.Column(db.Integer, db.ForeignKey("parkingSpot.spotID"), nullable = False)
+    checkTime = db.Column(db.DateTime, nullable = True)
+
     
     def _repr__(self):
         return "inTime: %s" % self.inTime

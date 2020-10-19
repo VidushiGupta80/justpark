@@ -46,6 +46,7 @@ def getAmountTicket(ticketNumber):
                 if disconnect is None:
                     return jsonify({'ticketNumber': ticketNumber,
                                     'vehicleNumber': vehicleNumber,
+                                    'checkTime': checkTime,
                                     'totalParkingHours': timeDurationHours,
                                     'totalChargingHours': chargingHours, 
                                     'parkingFee': parkingFee, 
@@ -59,6 +60,7 @@ def getAmountTicket(ticketNumber):
         chargingFee = chargingRate * chargingHours
     return jsonify({'ticketNumber': ticketNumber,
                     'vehicleNumber': vehicleNumber,
+                    'checkTime': checkTime,
                     'totalParkingHours': timeDurationHours,
                     'totalChargingHours': chargingHours, 
                     'parkingFee': parkingFee, 
@@ -93,6 +95,7 @@ def getAmountVehicle(vehicleNumber):
                 if disconnect is None:
                    return jsonify({'ticketNumber': ticket.ticketNumber,
                                     'vehicleNumber': vehicleNumber,
+                                    'checkTime': checkTime,
                                     'totalParkingHours': timeDurationHours,
                                     'totalChargingHours': chargingHours, 
                                     'parkingFee': parkingFee, 
@@ -106,6 +109,7 @@ def getAmountVehicle(vehicleNumber):
         chargingFee = chargingRate * chargingHours
     return jsonify({'ticketNumber': ticket.ticketNumber,
                     'vehicleNumber': vehicleNumber,
+                    'checkTime': checkTime,
                     'totalParkingHours': timeDurationHours,
                     'totalChargingHours': chargingHours, 
                     'parkingFee': parkingFee, 
@@ -113,7 +117,7 @@ def getAmountVehicle(vehicleNumber):
                     'totalAmount': parkingFee + chargingFee})
 
 
-@main.route('/getFreeSpots/<int:parkingLotID>/<int:floorNumber>/<string:vehicleType>', methods=['GET'])
+@main.route('/getFreeSpots/<int:parkingLotID>/<int:floorNumber>/<string:vehicleType>',methods=['GET'])
 def getFreeSpots(parkingLotID, floorNumber, vehicleType):
     # getting all designed parkingspots of the given vehicle type for given floor number and parking ID
     allSpots = ParkingSpot.query.filter(and_(ParkingSpot.parkingLotID == parkingLotID, ParkingSpot.floorNumber == floorNumber, ParkingSpot.spotType == vehicleType)).all()
@@ -208,14 +212,17 @@ def checkOutTicket():
     ticketNumber = requestBody['ticketNumber']
     amount = requestBody['amount']
     mode = requestBody['mode']
+    checkTime = requestBody['checkTime']
     # getting ticket object for given ticket number
     ticket = Ticket.query.get(ticketNumber)
+    ticket.checkTime = checkTime
     if ticket.isPaid == True:
-        return jsonify({'status': 200, 'isPaid': ticket.isPaid})
+        return jsonify({'status': 200, 'message': 'Ticket already paid'})
     # updating paid status of ticket
     ticket.isPaid = True
     db.session.commit()
-    return jsonify({'status': 200, 'isPaid': ticket.isPaid})
+    return jsonify({'status': 200, 
+                    'message': 'Ticket paid successfully'})
 
 @main.route('/electricUseStart/<string:ticketNumber>', methods = ['POST'])
 def startCharging(ticketNumber):
@@ -254,7 +261,7 @@ def stopCharging(ticketNumber):
                     'message': 'Your vehicle is now disconnected',
                     'duration': duration})
 
-@main.route('/register', methods = ['GET', 'POST'])
+@main.route('/register', methods = ['GET','POST'])
 def registerCustomer():
     if current_user.is_authenticated:
         return jsonify({'message': 'Already logged in'})
