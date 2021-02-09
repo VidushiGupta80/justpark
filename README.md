@@ -1,5 +1,5 @@
 # justpark: Parking-Lot management product
-Parking Lot management product written in Python. Uses Flask for REST APIs. MySql for Database.
+Parking Lot management product written in Python. Uses Flask for REST APIs. SQLite for Database.
 
 ## Requirements:
 1. The parking lot should have multiple floors where customers can park their cars.
